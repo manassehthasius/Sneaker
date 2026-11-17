@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* Sole Studio · Dark Pro: Graphit-Arbeitsfläche, neutral grauer Designbereich, Creme-Akzent */
+@theme {
+  --color-bg: #121211;
+  --color-panel: #1b1a18;
+  --color-panel-2: #23221f;
+  --color-raise: #2c2a26;
+  --color-line: #33312c;
+  --color-line-2: #48453e;
+  --color-fg: #ece7dd;
+  --color-muted: #a39d91;
+  --color-faint: #77726a;
+  --color-accent: #efe3c8;
+  --color-accent-ink: #1b1812;
+  --color-ok: #9cc597;
+  --color-warn: #e3b663;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.font-display {
+  font-stretch: 115%;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+.viewport-bg {
+  /* Neutral grau: nur so lassen sich Farben ehrlich beurteilen */
+  background: radial-gradient(120% 90% at 50% 40%, #a3a3a3, #868686);
+}
+
+.glass {
+  background: rgba(20, 20, 19, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+input[type="range"] {
+  accent-color: var(--color-accent);
+}
+
+/* Schmale Scrollbalken in Panels */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-2) transparent;
+}
