@@ -37,6 +37,8 @@ AMBIENTCG = {
     "rubber": "Rubber004",
 }
 HDRI = "studio_small_09"
+# Mockup-Szenen: Dateiname -> Poly-Haven-Asset
+SCENES = {"street": "birbeck_street_underpass", "parking": "abandoned_parking", "city": "canary_wharf"}
 
 
 def get(url: str) -> bytes:
@@ -203,6 +205,11 @@ def fetch_hdri() -> None:
     with open(os.path.join(ENV_OUT, "studio.hdr"), "wb") as f:
         f.write(get(url))
     print("hdri", HDRI)
+    for name, asset in SCENES.items():
+        files = json.loads(get(f"https://api.polyhaven.com/files/{asset}"))
+        with open(os.path.join(ENV_OUT, f"{name}.hdr"), "wb") as f:
+            f.write(get(files["hdri"]["1k"]["hdr"]["url"]))
+        print("scene", name, asset)
 
 
 def main() -> None:

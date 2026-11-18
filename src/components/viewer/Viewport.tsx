@@ -79,6 +79,34 @@ function Effects() {
   );
 }
 
+const SCENE_FILES = { studio: "/env/studio.hdr", street: "/env/street.hdr", parking: "/env/parking.hdr", city: "/env/city.hdr" } as const;
+
+/** Lichtumgebung und Hintergrund: Studio neutral grau, Mockup-Szenen mit unscharfem Fotohintergrund */
+function SceneSetup() {
+  const scene = useStudio((s) => s.scene);
+  if (scene === "studio") {
+    return (
+      <>
+        {/* Neutral grau: nur so lassen sich Farben ehrlich beurteilen */}
+        <color attach="background" args={["#979797"]} />
+        <Suspense fallback={null}>
+          <Environment files={SCENE_FILES.studio} environmentIntensity={1.0} />
+        </Suspense>
+      </>
+    );
+  }
+  return (
+    <Suspense fallback={<color attach="background" args={["#979797"]} />}>
+      <Environment key={scene} files={SCENE_FILES[scene]} background backgroundBlurriness={0.16} backgroundIntensity={0.9} environmentIntensity={1.15} />
+    </Suspense>
+  );
+}
+
+function Controls() {
+  const autoRotate = useStudio((s) => s.autoRotate);
+  return <OrbitControls makeDefault target={TARGET} minDistance={0.14} maxDistance={1.1} enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.6} />;
+}
+
 export default function Viewport() {
   return (
     <Canvas
@@ -92,12 +120,10 @@ export default function Viewport() {
       }}
       style={{ touchAction: "none" }}
     >
-      {/* Neutral grau: nur so lassen sich Farben ehrlich beurteilen */}
-      <color attach="background" args={["#979797"]} />
+      <SceneSetup />
       <Suspense fallback={null}>
-        <Environment files="/env/studio.hdr" environmentIntensity={1.0} />
         <Shoe />
-        <ContactShadows position={[0, 0.0004, 0]} opacity={0.7} scale={0.7} blur={2.4} far={0.12} resolution={1024} color="#1a1816" frames={Infinity} />
+        <ContactShadows position={[0, 0.0004, 0]} opacity={0.6} scale={0.8} blur={3.2} far={0.12} resolution={1024} color="#1a1816" frames={Infinity} />
         <Effects />
       </Suspense>
       <directionalLight
@@ -120,7 +146,7 @@ export default function Viewport() {
         <planeGeometry args={[2, 2]} />
         <shadowMaterial opacity={0.22} />
       </mesh>
-      <OrbitControls makeDefault target={TARGET} minDistance={0.14} maxDistance={1.1} enableDamping dampingFactor={0.08} />
+      <Controls />
       <CameraRig />
     </Canvas>
   );

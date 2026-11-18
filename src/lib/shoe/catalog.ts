@@ -63,10 +63,10 @@ export const PALETTE: [string, string][] = [
 ];
 
 type Map13 = Record<PartId, [string, MaterialId]>;
-function D(soleH: number, map: Map13): Design {
+function D(soleH: number, map: Map13, shape?: Design["shape"]): Design {
   const parts = {} as Record<PartId, PartStyle>;
   (Object.keys(map) as PartId[]).forEach((id) => (parts[id] = { c: map[id][0], m: map[id][1] }));
-  return { soleH, parts };
+  return shape ? { soleH, parts, shape } : { soleH, parts };
 }
 
 export interface Template {
@@ -82,12 +82,12 @@ export const TEMPLATES: Template[] = [
     design: D(32, { quarter: ["#EAE3D4", "leather"], vamp: ["#EAE3D4", "leather"], toecap: ["#C9B28A", "suede"], mudguard: ["#C9B28A", "suede"], heel: ["#A9875B", "suede"], heeltab: ["#A9875B", "suede"], eyestay: ["#C9B28A", "suede"], tongue: ["#EAE3D4", "leather"], lining: ["#D9CBB0", "leather"], badge: ["#A9875B", "leather"], laces: ["#EFE9DC", "cotton"], midsole: ["#F1EADB", "rubber"], outsole: ["#A86F3A", "rubber"] }) },
   { name: "Concrete", tag: "Monochrom", mood: "Urbanes Grau in drei Stufen.", why: "Nubuk und Wildleder geben den Grautönen Tiefe. Der weisse Logo-Patch ist der einzige Akzent.",
     design: D(32, { quarter: ["#B9BBBD", "nubuck"], vamp: ["#B9BBBD", "nubuck"], toecap: ["#8E9195", "suede"], mudguard: ["#8E9195", "suede"], heel: ["#6E7276", "suede"], heeltab: ["#6E7276", "leather"], eyestay: ["#8E9195", "suede"], tongue: ["#B9BBBD", "nubuck"], lining: ["#9DA0A3", "leather"], badge: ["#EDEDED", "leather"], laces: ["#D8D9DA", "cotton"], midsole: ["#ECEAE5", "rubber"], outsole: ["#5C5F63", "rubber"] }) },
-  { name: "Off-Duty Navy", tag: "Canvas", mood: "Entspannter Wochenend-Schuh.", why: "Navy-Canvas mit cremefarbenem Leder ist zeitlos. Rost setzt den Akzent.",
-    design: D(32, { quarter: ["#283149", "canvas"], vamp: ["#283149", "canvas"], toecap: ["#283149", "canvas"], mudguard: ["#F1ECE0", "leather"], heel: ["#F1ECE0", "leather"], heeltab: ["#B6452C", "leather"], eyestay: ["#F1ECE0", "leather"], tongue: ["#283149", "canvas"], lining: ["#F1ECE0", "leather"], badge: ["#B6452C", "leather"], laces: ["#F1ECE0", "cotton"], midsole: ["#EFE6D2", "rubber"], outsole: ["#283149", "rubber"] }) },
+  { name: "Off-Duty Navy", tag: "Skate Vulc", mood: "Entspannter Wochenend-Schuh.", why: "Navy-Canvas mit cremefarbenem Leder ist zeitlos. Rost setzt den Akzent.",
+    design: D(22, { quarter: ["#283149", "canvas"], vamp: ["#283149", "canvas"], toecap: ["#283149", "canvas"], mudguard: ["#F1ECE0", "leather"], heel: ["#F1ECE0", "leather"], heeltab: ["#B6452C", "leather"], eyestay: ["#F1ECE0", "leather"], tongue: ["#283149", "canvas"], lining: ["#F1ECE0", "leather"], badge: ["#B6452C", "leather"], laces: ["#F1ECE0", "cotton"], midsole: ["#EFE6D2", "rubber"], outsole: ["#283149", "rubber"] }, { soleType: "vulc", toeSpring: 6, toeWidth: 1.02, toeHeight: 0.92, toeRound: 0.72, width: 1.02 }) },
   { name: "Matcha Latte", tag: "Pastell-Erde", mood: "Salbeigrün auf Creme.", why: "Ein gedecktes Grün wirkt frisch, ohne laut zu sein.",
     design: D(32, { quarter: ["#EFE8D9", "leather"], vamp: ["#EFE8D9", "leather"], toecap: ["#9BAA86", "suede"], mudguard: ["#9BAA86", "suede"], heel: ["#9BAA86", "suede"], heeltab: ["#6E7D5C", "suede"], eyestay: ["#9BAA86", "suede"], tongue: ["#EFE8D9", "leather"], lining: ["#CFC4AA", "leather"], badge: ["#6E7D5C", "leather"], laces: ["#EFE8D9", "cotton"], midsole: ["#E9DFC9", "rubber"], outsole: ["#C7B48F", "rubber"] }) },
-  { name: "Night Shift", tag: "Blackout", mood: "Dunkel, technisch, schlicht.", why: "Bei Schwarz-in-Schwarz tragen die Oberflächen. Die graue Fersenlasche setzt den Kontrast.",
-    design: D(32, { quarter: ["#1E1F21", "leather"], vamp: ["#1E1F21", "leather"], toecap: ["#2A2B2E", "suede"], mudguard: ["#2A2B2E", "suede"], heel: ["#2A2B2E", "suede"], heeltab: ["#C9CBCE", "ripstop"], eyestay: ["#2A2B2E", "suede"], tongue: ["#1E1F21", "ripstop"], lining: ["#3A3C40", "leather"], badge: ["#C9CBCE", "leather"], laces: ["#1E1F21", "cotton"], midsole: ["#2B2C2E", "rubber"], outsole: ["#18191A", "rubber"] }) },
+  { name: "Night Shift", tag: "Blackout High", mood: "Dunkler High-Top, technisch und schlicht.", why: "Bei Schwarz-in-Schwarz tragen die Oberflächen. Die graue Fersenlasche setzt den Kontrast.",
+    design: D(32, { quarter: ["#1E1F21", "leather"], vamp: ["#1E1F21", "leather"], toecap: ["#2A2B2E", "suede"], mudguard: ["#2A2B2E", "suede"], heel: ["#2A2B2E", "suede"], heeltab: ["#C9CBCE", "ripstop"], eyestay: ["#2A2B2E", "suede"], tongue: ["#1E1F21", "ripstop"], lining: ["#3A3C40", "leather"], badge: ["#C9CBCE", "leather"], laces: ["#1E1F21", "cotton"], midsole: ["#2B2C2E", "rubber"], outsole: ["#18191A", "rubber"] }, { collar: 1, toeSpring: 12, toeWidth: 1.02, toeHeight: 1.04, toeRound: 0.6, width: 1.02, soleFlare: 0.5 }) },
   { name: "Terracotta Court", tag: "Clean mit Akzent", mood: "Weisser Court-Schuh mit warmem Akzent.", why: "Viel Off-White wirkt clean. Terracotta-Wildleder gibt Wärme.",
     design: D(32, { quarter: ["#F2EEE6", "leather"], vamp: ["#F2EEE6", "leather"], toecap: ["#F2EEE6", "leather"], mudguard: ["#C2643F", "suede"], heel: ["#C2643F", "suede"], heeltab: ["#C2643F", "suede"], eyestay: ["#F2EEE6", "leather"], tongue: ["#F2EEE6", "leather"], lining: ["#E3C9B5", "leather"], badge: ["#C2643F", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#F3EDE1", "rubber"], outsole: ["#A86F3A", "rubber"] }) },
   { name: "Vintage Varsity", tag: "Retro", mood: "College-Look der 70er.", why: "Waldgrün und Senf auf Creme. Die vergilbte Sohle verstärkt den Vintage-Charakter.",
@@ -95,7 +95,7 @@ export const TEMPLATES: Template[] = [
   { name: "Cloud Mesh", tag: "Sommer", mood: "Luftig und hell.", why: "Weisses Mesh mit hellgrauem Wildleder wirkt leicht und atmungsaktiv.",
     design: D(34, { quarter: ["#F4F4F2", "mesh"], vamp: ["#F4F4F2", "mesh"], toecap: ["#D5D6D8", "suede"], mudguard: ["#D5D6D8", "suede"], heel: ["#D5D6D8", "suede"], heeltab: ["#F4F4F2", "ripstop"], eyestay: ["#D5D6D8", "suede"], tongue: ["#F4F4F2", "mesh"], lining: ["#E6E7E9", "knit"], badge: ["#9AA3AE", "leather"], laces: ["#F4F4F2", "cotton"], midsole: ["#FAFAF8", "eva"], outsole: ["#CFD3D8", "rubber"] }) },
   { name: "Chunky Mocha", tag: "Vorschau Chunky", mood: "Erdiges Braun auf kräftiger Sohle.", why: "Dunkle Brauntöne halten die hohe Sohle im Gleichgewicht.",
-    design: D(56, { quarter: ["#6B4C3B", "suede"], vamp: ["#6B4C3B", "suede"], toecap: ["#8A6A55", "nubuck"], mudguard: ["#4A3328", "suede"], heel: ["#4A3328", "suede"], heeltab: ["#E9DFCF", "ripstop"], eyestay: ["#8A6A55", "suede"], tongue: ["#E9DFCF", "mesh"], lining: ["#E9DFCF", "knit"], badge: ["#E9DFCF", "leather"], laces: ["#E9DFCF", "cotton"], midsole: ["#EEE5D3", "eva"], outsole: ["#4A3328", "rubber"] }) },
+    design: D(52, { quarter: ["#6B4C3B", "suede"], vamp: ["#6B4C3B", "suede"], toecap: ["#8A6A55", "nubuck"], mudguard: ["#4A3328", "suede"], heel: ["#4A3328", "suede"], heeltab: ["#E9DFCF", "ripstop"], eyestay: ["#8A6A55", "suede"], tongue: ["#E9DFCF", "mesh"], lining: ["#E9DFCF", "knit"], badge: ["#E9DFCF", "leather"], laces: ["#E9DFCF", "cotton"], midsole: ["#EEE5D3", "eva"], outsole: ["#4A3328", "rubber"] }, { soleType: "chunky", soleFlare: 3, toeSpring: 13, toeWidth: 1.08, toeHeight: 1.1, toeRound: 0.65, width: 1.04 }) },
 ];
 
 export const SOLE_MIN = 26;

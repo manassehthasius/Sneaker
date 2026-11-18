@@ -3,28 +3,30 @@
 import { useState } from "react";
 import { PARTS, TEMPLATES } from "@/lib/shoe/catalog";
 import { useStudio } from "@/lib/store";
+import { FormPanel } from "./FormPanel";
 import { Button } from "./ui";
 
-type Tab = "parts" | "templates" | "projects";
+type Tab = "parts" | "form" | "templates" | "projects";
 
 export function LeftPanel({ onPick }: { onPick?: () => void }) {
   const [tab, setTab] = useState<Tab>("parts");
   return (
     <div className="grid gap-3 p-2.5">
-      <div className="grid grid-cols-3 gap-1 rounded-lg bg-bg p-1" role="tablist">
-        {([["parts", "Teile"], ["templates", "Vorlagen"], ["projects", "Projekte"]] as [Tab, string][]).map(([id, label]) => (
+      <div className="grid grid-cols-4 gap-1 rounded-lg bg-bg p-1" role="tablist">
+        {([["parts", "Teile"], ["form", "Form"], ["templates", "Farben"], ["projects", "Projekte"]] as [Tab, string][]).map(([id, label]) => (
           <button
             key={id}
             role="tab"
             aria-selected={tab === id}
             onClick={() => setTab(id)}
-            className={`min-h-8 rounded-md text-[12px] ${tab === id ? "bg-raise text-fg" : "text-muted hover:text-fg"}`}
+            className={`min-h-8 rounded-md text-[11.5px] ${tab === id ? "bg-raise text-fg" : "text-muted hover:text-fg"}`}
           >
             {label}
           </button>
         ))}
       </div>
       {tab === "parts" && <PartList onPick={onPick} />}
+      {tab === "form" && <FormPanel />}
       {tab === "templates" && <TemplateList onPick={onPick} />}
       {tab === "projects" && <ProjectList onPick={onPick} />}
     </div>

@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { TEMPLATES, type Template } from "./shoe/catalog";
 import type { Design, PartId, PartStyle } from "./shoe/types";
 
+export type SceneId = "studio" | "street" | "parking" | "city";
+
 export type ViewPreset = "threeQuarter" | "side" | "front" | "back" | "top" | "bottom" | "explode";
 
 export interface SavedProject {
@@ -31,6 +33,14 @@ interface StudioState {
   quality: "high" | "fast";
   setQuality: (q: "high" | "fast") => void;
   setDetails: (patch: Partial<NonNullable<Design["details"]>>) => void;
+  /** Form ändern. `commit` = neuer Schritt im Verlauf */
+  setShape: (patch: Partial<NonNullable<Design["shape"]>>, commit: boolean, soleH?: number) => void;
+  /** Nur die Form eines Modells übernehmen, Farben behalten */
+  applyModel: (shape: NonNullable<Design["shape"]>, soleH: number, name?: string) => void;
+  autoRotate: boolean;
+  setAutoRotate: (v: boolean) => void;
+  scene: SceneId;
+  setScene: (s: SceneId) => void;
 
   select: (id: PartId) => void;
   setParts: (ids: PartId[], patch: Partial<PartStyle>) => void;
@@ -111,6 +121,17 @@ export const useStudio = create<StudioState>((set, get) => {
     toast: null,
     quality: "high",
     setQuality: (q) => set({ quality: q }),
+    setShape: (patch, commit, soleH) =>
+      set((s) => {
+        const design = { ...s.design, shape: { ...s.design.shape, ...patch }, soleH: soleH ?? s.design.soleH };
+        return commit ? { ...push(s), design } : { design };
+      }),
+    applyModel: (shape, soleH, name) =>
+      set((s) => ({ ...push(s), design: { ...clone(s.design), shape: { ...shape }, soleH }, name: name ?? s.name })),
+    autoRotate: false,
+    setAutoRotate: (v) => set({ autoRotate: v }),
+    scene: "studio",
+    setScene: (sc) => set({ scene: sc }),
     setDetails: (patch) =>
       set((s) => {
         const design = clone(s.design);

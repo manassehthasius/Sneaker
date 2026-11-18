@@ -39,7 +39,11 @@ export function Shoe() {
   const perforation = design.details?.perforation ?? false;
   const doubleStitch = design.details?.doubleStitch ?? true;
   const logoText = design.details?.logoText ?? "SOLE";
-  const geo = useMemo(() => buildShoe(design.soleH, { perforation, doubleStitch }), [design.soleH, perforation, doubleStitch]);
+  const shapeKey = JSON.stringify(design.shape ?? {});
+  const geo = useMemo(
+    () => buildShoe(design.soleH, { perforation, doubleStitch }, JSON.parse(shapeKey)),
+    [design.soleH, perforation, doubleStitch, shapeKey],
+  );
   useEffect(
     () => () => geo.parts.forEach((p) => [p.surface, p.stitches, p.eyelets, p.dark, p.label, p.tread, p.aglets].forEach((g) => g?.dispose())),
     [geo],

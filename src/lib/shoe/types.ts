@@ -1,3 +1,5 @@
+import type { ShapeParams } from "./geometry";
+
 /** Alle auswählbaren Teile eines Sneakers. Die IDs sind stabil und werden gespeichert. */
 export type PartId =
   | "quarter"
@@ -42,6 +44,8 @@ export interface Design {
   parts: Record<PartId, PartStyle>;
   /** Details, die nicht an einer Farbe hängen */
   details?: DesignDetails;
+  /** Form des Modells (Schafthöhe, Spitze, Sohlentyp …). Fehlende Werte = Standard */
+  shape?: Partial<ShapeParams>;
 }
 
 export interface DesignDetails {

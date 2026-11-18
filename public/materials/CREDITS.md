@@ -14,6 +14,9 @@ Die Farbtexturen wurden mit `tools/fetch_assets.py` in Graustufen umgewandelt, d
 | Gummi (`rubber`) | ambientCG | Rubber004 |
 | Mesh, Ripstop, EVA, Sohlenprofil (`tread`) | selbst erzeugt | `tools/fetch_assets.py` |
 | Studiolicht (`/env/studio.hdr`) | Poly Haven | studio_small_09 |
+| Szene Strasse (`/env/street.hdr`) | Poly Haven | birbeck_street_underpass |
+| Szene Parkhaus (`/env/parking.hdr`) | Poly Haven | abandoned_parking |
+| Szene Stadt (`/env/city.hdr`) | Poly Haven | canary_wharf |
 
 - Poly Haven: https://polyhaven.com
 - ambientCG: https://ambientcg.com

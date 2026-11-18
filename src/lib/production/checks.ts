@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import { MATERIALS } from "../shoe/catalog";
 import type { Design, MaterialId, PartId } from "../shoe/types";
+import { DEFAULT_SHAPE } from "../shoe/geometry";
 
 export type CheckLevel = "ok" | "info" | "warn";
 
@@ -69,12 +70,23 @@ export function productionChecks(d: Design): ProductionHint[] {
       : { level: "ok", title: `${combos.size} Material-Farb-Kombinationen`, text: "Überschaubar. Gut für kleine erste Produktionen.", anchor: "materialien" },
   );
 
-  // 2. Sohle
-  out.push(
+  const shape = { ...DEFAULT_SHAPE, ...d.shape };
+
+  // 2. Sohle nach Typ
+  if (shape.soleType === "vulc") {
+    out.push({ level: "info", title: "Vulkanisierte Sohle", text: "Braucht eine darauf spezialisierte Fabrik und Metall-Leisten. Keine EVA-Zwischensohle möglich. Günstige Werkzeuge, ideal für Canvas.", anchor: "bauweisen" });
+  } else if (shape.soleType === "chunky" || shape.soleType === "runner") {
+    out.push({ level: "warn", title: shape.soleType === "chunky" ? "Chunky-Sohle" : "Runner-Keilsohle", text: "Eine eigene Sohlenform braucht Gussformen, grob 1500 bis 5000 USD, oft pro Grösse. Frag zuerst nach vorhandenen Sohlen mit ähnlicher Form.", anchor: "kosten" });
+  } else out.push(
     d.soleH > 40
       ? { level: "warn", title: "Hohe Sohle", text: "Eine eigene Sohlenform braucht meist eine Gussform, grob 1500 bis 5000 USD, oft pro Grösse. Frag den Hersteller nach vorhandenen Plateau-Sohlen.", anchor: "kosten" }
       : { level: "ok", title: "Standard-Cupsole", text: "Viele Hersteller haben passende Cupsoles auf Lager. Das spart die Gussform.", anchor: "bauweisen" },
   );
+
+  // Form
+  if (shape.collar >= 0.75) out.push({ level: "info", title: "High-Top", text: "Mehr Material, längere Schnürung und ein gepolsterter Kragen. Der Fabrikpreis liegt meist etwas höher als beim Low-Top.", anchor: "kosten" });
+  if (shape.toeWidth < 0.9 || shape.toeRound < 0.25) out.push({ level: "warn", title: "Sehr schmale Spitze", text: "Kann bei breiten Füssen drücken. Passform unbedingt am Muster mit mehreren Personen testen.", anchor: "leisten" });
+  if (shape.toeSpring > 18) out.push({ level: "info", title: "Viel Zehenhub", text: "Starker Zehenhub braucht einen passenden Leisten. Frag den Hersteller, ob ein solcher vorhanden ist.", anchor: "leisten" });
 
   // 3. Textil an Verschleisszonen
   const weak = WEAR_ZONES.filter((id) => P[id].m === "mesh" || P[id].m === "knit");
