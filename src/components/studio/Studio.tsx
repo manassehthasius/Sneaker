@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MODELS, STYLES } from "@/lib/shoe/models";
 import { useStudio, writeDraft } from "@/lib/store";
 import { BauPanel } from "./BauPanel";
+import { RenderPanel } from "./RenderPanel";
 import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
 import { TopBar } from "./TopBar";
@@ -66,6 +67,7 @@ export default function Studio() {
           <RightPanel />
         </aside>
       </div>
+      <RenderPanel />
       {toast && (
         <div role="status" className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-line-2 bg-panel-2 px-4 py-2 text-[13px] shadow-xl">
           {toast}

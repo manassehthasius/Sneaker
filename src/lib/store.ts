@@ -40,6 +40,8 @@ interface StudioState {
   applyStyle: (st: StylePreset) => void;
   /** Nur die Form eines Modells übernehmen, Farben behalten */
   applyModel: (shape: NonNullable<Design["shape"]>, soleH: number, name?: string) => void;
+  renderOpen: boolean;
+  setRenderOpen: (v: boolean) => void;
   autoRotate: boolean;
   setAutoRotate: (v: boolean) => void;
   scene: SceneId;
@@ -138,6 +140,8 @@ export const useStudio = create<StudioState>((set, get) => {
       }),
     applyModel: (shape, soleH, name) =>
       set((s) => ({ ...push(s), design: { ...clone(s.design), shape: { ...shape }, soleH }, name: name ?? s.name })),
+    renderOpen: false,
+    setRenderOpen: (v) => set({ renderOpen: v }),
     autoRotate: false,
     setAutoRotate: (v) => set({ autoRotate: v }),
     scene: "studio",

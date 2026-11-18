@@ -26,6 +26,7 @@ export function TopBar({ onToggleLeft }: { onToggleLeft: () => void }) {
   const redo = useStudio((s) => s.redo);
   const save = useStudio((s) => s.save);
   const notify = useStudio((s) => s.notify);
+  const setRenderOpen = useStudio((s) => s.setRenderOpen);
 
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-panel-2 px-3 py-2 pl-[max(12px,env(safe-area-inset-left))] pr-[max(12px,env(safe-area-inset-right))]">
@@ -65,7 +66,8 @@ export function TopBar({ onToggleLeft }: { onToggleLeft: () => void }) {
         <Button onClick={undo} disabled={!canUndo} title="Rückgängig (Ctrl+Z)">Rückgängig</Button>
         <Button onClick={redo} disabled={!canRedo} title="Wiederholen (Ctrl+Shift+Z)" className="hidden sm:inline-flex">Wiederholen</Button>
         <Button onClick={save} title="Speichern (Ctrl+S)">Speichern</Button>
-        <Button variant="primary" onClick={() => { if (exportPng(name)) notify("Bild exportiert"); }}>PNG exportieren</Button>
+        <Button onClick={() => { if (exportPng(name)) notify("Bild exportiert"); }}>PNG</Button>
+        <Button variant="primary" onClick={() => setRenderOpen(true)}>KI-Foto</Button>
       </div>
     </header>
   );
