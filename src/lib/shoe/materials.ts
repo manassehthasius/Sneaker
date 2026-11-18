@@ -104,15 +104,16 @@ export function threadColor(hex: string) {
 }
 
 /** Laufsohlen-Unterseite: Gummi mit Fischgrat-Profil */
-export function createTreadMaterial(hex: string, aniso = 8): THREE.MeshPhysicalMaterial {
+export function createTreadMaterial(hex: string, kind: "tread" | "lug" = "tread", aniso = 8): THREE.MeshPhysicalMaterial {
   const m = createMaterial("rubber", hex, aniso);
-  const n = loader.load("/materials/tread/normal.jpg");
+  const n = loader.load(`/materials/${kind}/normal.jpg`);
   n.wrapS = n.wrapT = THREE.RepeatWrapping;
   n.colorSpace = THREE.NoColorSpace;
-  n.repeat.set(100 / 80, 100 / 80);
+  const tile = kind === "lug" ? 110 : 80;
+  n.repeat.set(100 / tile, 100 / tile);
   n.anisotropy = aniso;
   m.normalMap = n;
-  m.normalScale.set(1.4, 1.4);
+  m.normalScale.set(kind === "lug" ? 2.4 : 1.4, kind === "lug" ? 2.4 : 1.4);
   m.roughness = 0.85;
   return m;
 }

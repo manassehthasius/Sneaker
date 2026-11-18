@@ -12,7 +12,7 @@ type NumKey = Exclude<{ [K in keyof ShapeParams]: ShapeParams[K] extends number 
 interface SliderDef { key: NumKey; label: string; min: number; max: number; step: number; fmt: (v: number) => string; left: string; right: string }
 
 const FORM_SLIDERS: SliderDef[] = [
-  { key: "collar", label: "Schafthöhe", min: 0, max: 1, step: 0.01, fmt: (v) => (v < 0.25 ? "Low" : v < 0.75 ? "Mid" : "High"), left: "Low", right: "High" },
+  { key: "collar", label: "Schafthöhe", min: 0, max: 1.3, step: 0.01, fmt: (v) => (v < 0.25 ? "Low" : v < 0.75 ? "Mid" : v <= 1.05 ? "High" : "Stiefel"), left: "Low", right: "Stiefel" },
   { key: "toeWidth", label: "Breite der Spitze", min: 0.85, max: 1.15, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, left: "schmal", right: "breit" },
   { key: "toeHeight", label: "Höhe der Zehenbox", min: 0.8, max: 1.25, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, left: "flach", right: "hoch" },
   { key: "toeRound", label: "Form der Spitze", min: 0, max: 1, step: 0.01, fmt: (v) => (v < 0.35 ? "spitz" : v < 0.65 ? "neutral" : "rund"), left: "spitz", right: "rund" },
@@ -175,6 +175,10 @@ export function FormPanel() {
             <Chip key={id} active={shape.toecapStyle === id} title={hint} onClick={() => setShape({ toecapStyle: id }, true)}>{label}</Chip>
           ))}
         </div>
+        <label htmlFor="f-split" className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-line bg-panel-2 p-2.5 text-[12.5px]">
+          <span>Geteilte Zunge (Split Tongue)</span>
+          <input id="f-split" type="checkbox" checked={shape.tongueSplit} onChange={(e) => setShape({ tongueSplit: e.target.checked }, true)} className="h-5 w-5 accent-[var(--color-accent)]" />
+        </label>
         {shape.toecapStyle !== "none" && slider({ key: "toecapLength", label: "Länge der Zehenkappe", min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, left: "kurz", right: "lang" })}
         {BUILD_SLIDERS.map(slider)}
         <Button onClick={() => setShape({ ...DEFAULT_SHAPE, soleType: shape.soleType }, true)}>Form und Konstruktion zurücksetzen</Button>

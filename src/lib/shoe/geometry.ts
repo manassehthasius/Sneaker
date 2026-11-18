@@ -34,6 +34,8 @@ function rimBase(shape: ShapeParams) {
       return (t: number) => 9 + 3 * (1 - smooth(0.05, 0.3, t));
     case "chunky":
       return () => 13;
+    case "lug":
+      return () => 15;
     default:
       return () => 11;
   }
@@ -87,7 +89,7 @@ const squareness = spline([[0, 2.2], [0.2, 2.4], [0.5, 2.45], [0.75, 2.2], [1, 2
 const toplineLow = spline([[0, 70], [0.05, 68], [0.12, 58], [0.18, 51], [0.24, 55], [0.29, 70], [0.34, 92], [0.4, 140]]);
 const toplineHigh = spline([[0, 128], [0.06, 126], [0.12, 121], [0.17, 124], [0.22, 140], [0.3, 190]]);
 
-export type SoleType = "cupsole" | "vulc" | "chunky" | "runner";
+export type SoleType = "cupsole" | "vulc" | "chunky" | "runner" | "lug";
 
 /** Form-Parameter eines Modells. Alle Regler im Studio ändern diese Werte. */
 export interface ShapeParams {
@@ -129,11 +131,13 @@ export interface ShapeParams {
   shellToe: number;
   /** Breite der Schnürsenkel in mm */
   laceWidth: number;
+  /** Geteilte Zunge («Split Tongue») */
+  tongueSplit: boolean;
 }
 
 export const DEFAULT_SHAPE: ShapeParams = {
   toeSpring: 11, collar: 0, toeWidth: 1, toeHeight: 1, toeRound: 0.5, width: 1, soleType: "cupsole", soleFlare: 0,
-  toecapStyle: "cap", toecapLength: 0.5, mudguardHeight: 0.4, heelCounter: 1, eyestayWidth: 0.15, eyelets: 0, tongueHeight: 0, collarDip: 1, shellToe: 0, laceWidth: 7,
+  toecapStyle: "cap", toecapLength: 0.5, mudguardHeight: 0.4, heelCounter: 1, eyestayWidth: 0.15, eyelets: 0, tongueHeight: 0, collarDip: 1, shellToe: 0, laceWidth: 7, tongueSplit: false,
 };
 
 /** Aktive Form während eines Aufbaus (buildShoe läuft synchron). */
@@ -642,7 +646,12 @@ export function buildShoe(soleH: number, opts: BuildOptions = {}, shapeIn: Parti
   {
     const tongueS = 0.31;
     const tStart = (s: number) => tS - 0.04 - shape.tongueHeight * 0.0022 + 0.035 * Math.pow(s / tongueS, 2);
-    const spec: PanelSpec = { part: "tongue", sides: [1], layer: -1.4, thick: 3.2, mode: "v", a0: -tongueS, a1: tongueS, lo: (s) => tStart(s), hi: () => 0.66, segA: 36, segB: 22 };
+    const tongueGeos: THREE.BufferGeometry[] = [];
+    const tongueStitches: THREE.BufferGeometry[] = [];
+    // Geteilte Zunge («Split Tongue»): zwei Hälften mit Spalt in der Mitte
+    const halves: [number, number][] = shape.tongueSplit ? [[-tongueS, -0.03], [0.03, tongueS]] : [[-tongueS, tongueS]];
+    for (const [ha0, ha1] of halves) {
+    const spec: PanelSpec = { part: "tongue", sides: [1], layer: -1.4, thick: 3.2, mode: "v", a0: ha0, a1: ha1, lo: (s) => tStart(s), hi: () => 0.66, segA: 36, segB: shape.tongueSplit ? 12 : 22 };
     // Zunge: eigene Abbildung, s direkt
     const b = new Builder();
     const P = new THREE.Vector3(), N = new THREE.Vector3();
@@ -672,7 +681,7 @@ export function buildShoe(soleH: number, opts: BuildOptions = {}, shapeIn: Parti
         const s = lerp(spec.a0, spec.a1, j / spec.segB);
         const t = lerp(spec.lo(s), spec.hi(s), i / spec.segA);
         const lift = (4 + shape.tongueHeight * 0.5) * (1 - smooth(tS - 0.06, tS + 0.01, t));
-        const pad = 4.5 * Math.cos((s / spec.a1) * Math.PI / 2) * (1 - smooth(0.5, 0.66, t));
+        const pad = 4.5 * Math.cos((s / tongueS) * Math.PI / 2) * (1 - smooth(0.5, 0.66, t));
         surf(t, s * 0.92, spec.layer + lift - pad - 1.2, P, N);
         N.multiplyScalar(-1);
         gridB.push(back.vertex(P, N, P.x / 100, (s * arcScale(t)) / 100));
@@ -695,7 +704,7 @@ export function buildShoe(soleH: number, opts: BuildOptions = {}, shapeIn: Parti
       const s = lerp(spec.a0, spec.a1, j / spec.segB);
       const t = lerp(spec.lo(s), spec.hi(s), i / spec.segA);
       const lift = (4 + shape.tongueHeight * 0.5) * (1 - smooth(tS - 0.06, tS + 0.01, t));
-      const pad = 4.5 * Math.cos((s / spec.a1) * Math.PI / 2) * (1 - smooth(0.5, 0.66, t));
+      const pad = 4.5 * Math.cos((s / tongueS) * Math.PI / 2) * (1 - smooth(0.5, 0.66, t));
       surf(t, s * 0.92, spec.layer + lift, P, N);
       top.push(rim.vertex(P, null, P.x / 100, 0));
       surf(t, s * 0.92, spec.layer + lift - pad - 1.2, P, N);
@@ -707,13 +716,16 @@ export function buildShoe(soleH: number, opts: BuildOptions = {}, shapeIn: Parti
     const pts: THREE.Vector3[] = [], nors: THREE.Vector3[] = [];
     for (let k = 0; k <= 60; k++) {
       const f = k / 60;
-      const s = lerp(spec.a0 + 0.03, spec.a1 - 0.03, f);
+      const s = lerp(spec.a0 + (spec.a0 < -0.1 ? 0.03 : 0.012), spec.a1 - (spec.a1 > 0.1 ? 0.03 : 0.012), f);
       const t = spec.lo(s) + 0.012;
       const p = new THREE.Vector3(), n = new THREE.Vector3();
       surf(t, s * 0.92, spec.layer + (4 + shape.tongueHeight * 0.5) * (1 - smooth(tS - 0.06, tS + 0.01, t)) + 0.12, p, n);
       pts.push(p); nors.push(n);
     }
-    parts.set("tongue", { part: "tongue", surface: mergeGeometries([g, gb, gr])!, stitches: stitchLine(pts, nors) });
+    tongueGeos.push(g, gb, gr);
+    tongueStitches.push(stitchLine(pts, nors));
+    }
+    parts.set("tongue", { part: "tongue", surface: mergeGeometries(tongueGeos)!, stitches: mergeGeometries(tongueStitches)! });
   }
 
   /* ---------------- Kragen-Polster ---------------- */
@@ -939,13 +951,24 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
   const rimAt = rimFor(shape);
   const RIMH = rimAt(0);
   // Wie stark die Sohle nach vorne dünner wird
-  const taper = type === "runner" ? 0.42 : type === "vulc" ? 0.08 : type === "chunky" ? 0.16 : 0.2;
+  const taper = type === "runner" ? 0.42 : type === "vulc" ? 0.08 : type === "chunky" ? 0.16 : type === "lug" ? 0.1 : 0.2;
   const bottomAt = (t: number) => RIMH - soleH * (1 - taper * smooth(0.18, 0.88, t));
-  const outT = type === "vulc" ? 5 : type === "runner" ? 6 : 8.5;
+  const outT = type === "vulc" ? 5 : type === "runner" ? 6 : type === "lug" ? 14 : 8.5;
   const splitAt = (t: number) => bottomAt(t) + outT;
   const flare = shape.soleFlare + (type === "chunky" ? 2.5 : 0);
   type Ring = { z: (t: number, acc: number) => number; off: number };
-  const outRings: Ring[] = [
+  // Profilsohle: Stollen an der Seitenwand
+  const lugZ = (t: number, acc: number) => bottomAt(t) + 5.5 + (Math.sin(acc / 5.2) > 0 ? 2.8 : 0);
+  const outRings: Ring[] = type === "lug" ? [
+    { z: (t) => bottomAt(t), off: 1.2 + flare },
+    { z: (t) => bottomAt(t) + 0.8, off: 3.2 + flare },
+    { z: (t, a) => lugZ(t, a), off: 3.6 + flare },
+    { z: (t, a) => lugZ(t, a) + 0.4, off: 2.8 + flare },
+    { z: (t) => splitAt(t) - 3, off: 2.8 + flare },
+    { z: (t) => splitAt(t) - 2.4, off: 3.5 + flare },
+    { z: (t) => splitAt(t) - 0.6, off: 3.6 + flare },
+    { z: (t) => splitAt(t), off: 3.0 + flare },
+  ] : [
     { z: (t) => bottomAt(t), off: 0.9 + flare },
     { z: (t) => bottomAt(t) + 0.8, off: 2.1 + flare },
     { z: (t) => bottomAt(t) + 2.5, off: 2.9 + flare },
@@ -985,6 +1008,19 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
       { z: () => RIMH - 3, off: 3.4 + flare * 0.3 },
       { z: () => RIMH - 0.9, off: 2.8 },
       { z: () => RIMH, off: 1.8 },
+      { z: () => RIMH + 0.25, off: 0.3 },
+    ];
+  } else if (type === "lug") {
+    // Stiefelsohle mit umlaufendem, vernähtem Rand (Welt)
+    midRings = [
+      { z: (t) => splitAt(t), off: 3.0 + flare },
+      { z: (t) => splitAt(t) + 0.6, off: 3.6 + flare },
+      { z: () => RIMH - 4.6, off: 3.6 + flare },
+      { z: () => RIMH - 4.2, off: 5.4 + flare },
+      { z: () => RIMH - 3.2, off: 5.6 + flare },
+      { z: () => RIMH - 2.9, off: 2.9 },
+      { z: () => RIMH - 0.9, off: 2.6 },
+      { z: () => RIMH, off: 1.7 },
       { z: () => RIMH + 0.25, off: 0.3 },
     ];
   } else if (type === "runner") {
@@ -1080,8 +1116,8 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
   orientOutward(midGeo);
 
   // Naht rund um die Cupsole
-  const stitchZ = RIMH - 5.2;
-  const ol = getOutline(3.22 + (type === "chunky" ? flare * 0.3 : 0));
+  const stitchZ = type === "lug" ? RIMH - 3.1 : RIMH - 5.2;
+  const ol = getOutline(type === "lug" ? 4.3 + flare : 3.22 + (type === "chunky" ? flare * 0.3 : 0));
   const pts: THREE.Vector3[] = [], nors: THREE.Vector3[] = [];
   for (let i = 0; i <= n; i++) {
     const p = ol[i % n];
@@ -1090,10 +1126,10 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
     let nor = new THREE.Vector2(-tan.y, tan.x);
     if (nor.dot(p.clone().sub(new THREE.Vector2(L / 2, 0))) < 0) nor = nor.multiplyScalar(-1);
     pts.push(new THREE.Vector3(p.x, p.y, stitchZ + springAt(clamp(p.x / L))));
-    nors.push(new THREE.Vector3(nor.x, nor.y, 0));
+    nors.push(type === "lug" ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(nor.x, nor.y, 0));
   }
   // Vulkanisierte und Runner-Sohlen haben keine umlaufende Naht
-  const stitches = type === "cupsole" || type === "chunky" ? stitchLine(pts, nors, 3.0, 1.6) : undefined;
+  const stitches = type === "cupsole" || type === "chunky" || type === "lug" ? stitchLine(pts, nors, type === "lug" ? 3.6 : 3.0, type === "lug" ? 1.4 : 1.6) : undefined;
 
   return {
     midsole: { part: "midsole", surface: midGeo, stitches },

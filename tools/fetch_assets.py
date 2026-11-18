@@ -198,6 +198,21 @@ def make_tread() -> None:
     print("procedural tread")
 
 
+def make_lug() -> None:
+    """Grobes Stollenprofil für Stiefelsohlen."""
+    n = 512
+    h = Image.new("L", (n, n), 0)
+    d = ImageDraw.Draw(h)
+    for row in range(0, n, 64):
+        off = 32 if (row // 64) % 2 else 0
+        for x in range(-64, n + 64, 64):
+            cx = x + off
+            d.polygon([(cx + 6, row + 8), (cx + 52, row + 14), (cx + 46, row + 54), (cx + 10, row + 50)], fill=255)
+    h = h.filter(ImageFilter.GaussianBlur(2.2))
+    save(height_to_normal(h, 6.0), "lug", "normal")
+    print("procedural lug")
+
+
 def fetch_hdri() -> None:
     os.makedirs(ENV_OUT, exist_ok=True)
     files = json.loads(get(f"https://api.polyhaven.com/files/{HDRI}"))
@@ -218,6 +233,7 @@ def main() -> None:
         make_ripstop()
         make_eva()
         make_tread()
+        make_lug()
         return
     for mat, asset in POLYHAVEN.items():
         fetch_polyhaven(mat, asset)
@@ -227,6 +243,7 @@ def main() -> None:
     make_ripstop()
     make_eva()
     make_tread()
+    make_lug()
     fetch_hdri()
 
 

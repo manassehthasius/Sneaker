@@ -28,7 +28,7 @@ export function ViewportTools() {
   const dragging = useRef(false);
 
   const st = useStudio((s) => s.design.shape?.soleType ?? "cupsole");
-  const soleType = { cupsole: soleH < 40 ? "Cupsole" : "Plateau-Cupsole", vulc: "Vulkanisiert", chunky: "Chunky", runner: "Runner" }[st];
+  const soleType = { cupsole: soleH < 40 ? "Cupsole" : "Plateau-Cupsole", vulc: "Vulkanisiert", chunky: "Chunky", runner: "Runner", lug: "Profilsohle" }[st];
 
   return (
     <>

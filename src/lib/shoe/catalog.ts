@@ -62,6 +62,7 @@ export const PALETTE: [string, string][] = [
   ["Off-White", "#F2EEE6"], ["Creme", "#EAE3D4"], ["Sand", "#C9B28A"], ["Tan", "#A9875B"], ["Mokka", "#6B4C3B"], ["Espresso", "#3B2A22"],
   ["Salbei", "#9BAA86"], ["Oliv", "#6E7D5C"], ["Waldgrün", "#2F5640"], ["Navy", "#283149"], ["Schiefer", "#5C6B7A"], ["Beton", "#B9BBBD"],
   ["Anthrazit", "#2A2B2E"], ["Schwarz", "#1A1B1C"], ["Terracotta", "#C2643F"], ["Rost", "#B6452C"], ["Senf", "#D9B44A"], ["Gum", "#A86F3A"],
+  ["Weizen", "#C99A55"], ["Khaki", "#8A8456"], ["Silber", "#C9CBCE"], ["Kirsch", "#8E2A2E"], ["Himmel", "#8FB3CF"], ["Rosé", "#D9A6A0"],
 ];
 
 type Map13 = Record<PartId, [string, MaterialId]>;

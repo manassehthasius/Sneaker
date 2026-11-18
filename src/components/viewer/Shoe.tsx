@@ -69,7 +69,8 @@ export function Shoe() {
   }, [design, mats]);
 
   // Sohlenprofil, Logo, Senkel-Enden
-  const tread = useMemo(() => createTreadMaterial("#ffffff"), []);
+  const treadKind = design.shape?.soleType === "lug" ? "lug" : "tread";
+  const tread = useMemo(() => createTreadMaterial("#ffffff", treadKind), [treadKind]);
   const aglet = useMemo(() => new THREE.MeshPhysicalMaterial({ roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.15 }), []);
   const labelTex = useMemo(() => createLabelTexture(logoText), [logoText]);
   const label = useMemo(() => new THREE.MeshStandardMaterial({ transparent: true, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }), []);

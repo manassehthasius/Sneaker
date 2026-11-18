@@ -76,6 +76,8 @@ export function productionChecks(d: Design): ProductionHint[] {
   // 2. Sohle nach Typ
   if (shape.soleType === "vulc") {
     out.push({ level: "info", title: "Vulkanisierte Sohle", text: "Braucht eine darauf spezialisierte Fabrik und Metall-Leisten. Keine EVA-Zwischensohle möglich. Günstige Werkzeuge, ideal für Canvas.", anchor: "bauweisen" });
+  } else if (shape.soleType === "lug") {
+    out.push({ level: "warn", title: "Profilsohle mit Rand", text: "Stiefelsohlen brauchen meist eigene Formen und einen Hersteller mit Erfahrung in Stiefeln. Wasserdichte, versiegelte Nähte oder eine Membran sind zusätzliche Kostentreiber.", anchor: "bauweisen" });
   } else if (shape.soleType === "chunky" || shape.soleType === "runner") {
     out.push({ level: "warn", title: shape.soleType === "chunky" ? "Chunky-Sohle" : "Runner-Keilsohle", text: "Eine eigene Sohlenform braucht Gussformen, grob 1500 bis 5000 USD, oft pro Grösse. Frag zuerst nach vorhandenen Sohlen mit ähnlicher Form.", anchor: "kosten" });
   } else out.push(
@@ -88,8 +90,11 @@ export function productionChecks(d: Design): ProductionHint[] {
   if (shape.toecapStyle === "ttoe") out.push({ level: "info", title: "T-Toe", text: "Kappe und Streifen werden meist als ein Stück gestanzt. Die Naht am Streifen sauber im Tech Pack zeichnen.", anchor: "konstruktion" });
   if (shape.laceWidth >= 12) out.push({ level: "info", title: "Breite Schnürsenkel", text: "Ösen und Ösenleiste müssen breit genug sein. Ösendurchmesser im Tech Pack angeben.", anchor: "techpack" });
 
+  if (shape.tongueSplit) out.push({ level: "info", title: "Geteilte Zunge", text: "Zwei Zungenteile mit eigenen Nähten und Polstern. Etwas mehr Arbeit, dafür ein starkes Erkennungsmerkmal.", anchor: "konstruktion" });
+  if (shape.collar > 1.05) out.push({ level: "info", title: "Stiefelschaft", text: "Stiefel brauchen einen eigenen Stiefel-Leisten und oft Haken statt Ösen oben. Mit dem Hersteller abklären.", anchor: "leisten" });
+
   // Form
-  if (shape.collar >= 0.75) out.push({ level: "info", title: "High-Top", text: "Mehr Material, längere Schnürung und ein gepolsterter Kragen. Der Fabrikpreis liegt meist etwas höher als beim Low-Top.", anchor: "kosten" });
+  if (shape.collar >= 0.75 && shape.collar <= 1.05) out.push({ level: "info", title: "High-Top", text: "Mehr Material, längere Schnürung und ein gepolsterter Kragen. Der Fabrikpreis liegt meist etwas höher als beim Low-Top.", anchor: "kosten" });
   if (shape.toeWidth < 0.9 || shape.toeRound < 0.25) out.push({ level: "warn", title: "Sehr schmale Spitze", text: "Kann bei breiten Füssen drücken. Passform unbedingt am Muster mit mehreren Personen testen.", anchor: "leisten" });
   if (shape.toeSpring > 18) out.push({ level: "info", title: "Viel Zehenhub", text: "Starker Zehenhub braucht einen passenden Leisten. Frag den Hersteller, ob ein solcher vorhanden ist.", anchor: "leisten" });
 

@@ -31,6 +31,7 @@ export const SOLE_TYPES: { id: SoleType; de: string; text: string }[] = [
   { id: "vulc", de: "Vulkanisiert", text: "Flach und flexibel, mit Gummi-Zehenkappe. Skate- und Canvas-Schuhe." },
   { id: "chunky", de: "Chunky", text: "Hohe, ausgestellte Sohle mit geschwungener Linie. Eigene Gussform nötig." },
   { id: "runner", de: "Runner", text: "EVA-Keil, vorne dünner. Geklebte Bauweise." },
+  { id: "lug", de: "Profil (Boot)", text: "Grobe Stollensohle mit vernähtem Rand. Für Stiefel und Outdoor-Looks." },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -80,6 +81,8 @@ export function interpretWish(text: string): WishResult {
   else if (has("skate", "vulkan", "vulc")) { r.shape.soleType = "vulc"; r.soleH = 22; r.shape.toeSpring = 6; r.understood.push("vulkanisierte Sohle"); }
   else if (has("runner", "lauf", "jogg", "retro run")) { r.shape.soleType = "runner"; r.soleH = 36; r.shape.toeSpring = 17; r.understood.push("Runner-Sohle"); }
   else if (has("court", "cupsole", "tennis")) { r.shape.soleType = "cupsole"; r.understood.push("Cupsole"); }
+  if (has("boot", "stiefel", "wander", "hiking", "outdoor")) { r.shape.soleType = "lug"; r.shape.collar = 1.25; r.shape.toeWidth = 1.12; r.shape.toeHeight = 1.18; r.shape.toeRound = 0.85; r.soleH = 34; r.understood.push("Stiefel mit Profilsohle"); }
+  if (has("split", "geteilte zunge")) { r.shape.tongueSplit = true; r.understood.push("geteilte Zunge"); }
   if (has("dünne sohle", "flache sohle")) { r.soleH = r.shape.soleType === "vulc" ? 20 : 27; r.understood.push("dünne Sohle"); }
 
   // Spitze und Breite
@@ -206,6 +209,41 @@ export const STYLES: StylePreset[] = [
     soleH: 26,
     shape: { collar: 0, soleType: "cupsole", toeSpring: 9, toeWidth: 0.92, toeHeight: 0.9, toeRound: 0.45, width: 0.97, soleFlare: 0, toecapStyle: "none", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 0.65, eyestayWidth: 0.11, eyelets: 6, tongueHeight: 2, collarDip: 0.9, shellToe: 0, laceWidth: 6 },
     parts: { quarter: ["#F4F3EF", "leather"], vamp: ["#F4F3EF", "leather"], toecap: ["#F4F3EF", "leather"], mudguard: ["#F4F3EF", "leather"], heel: ["#F4F3EF", "leather"], heeltab: ["#F4F3EF", "leather"], eyestay: ["#F4F3EF", "leather"], tongue: ["#F4F3EF", "leather"], lining: ["#EAE3D4", "leather"], badge: ["#D9B44A", "leather"], laces: ["#F4F3EF", "cotton"], midsole: ["#F6F5F1", "rubber"], outsole: ["#F6F5F1", "rubber"] },
+  },
+  {
+    id: "retro-gel-runner", name: "Retro Gel Runner", inspired: "Japanische Retro-Runner der 90er (z. B. ASICS Gel-Lyte III)",
+    text: "Schmaler Runner mit geteilter Zunge, Mesh unten und Wildleder-Overlays darüber.",
+    soleH: 34,
+    shape: { collar: 0.08, soleType: "runner", toeSpring: 15, toeWidth: 0.92, toeHeight: 0.96, toeRound: 0.4, width: 0.97, soleFlare: 1.5, toecapStyle: "cap", toecapLength: 0.5, mudguardHeight: 0.6, heelCounter: 1.3, eyestayWidth: 0.19, eyelets: 7, tongueHeight: 7, collarDip: 1.1, shellToe: 0, laceWidth: 6, tongueSplit: true },
+    parts: { quarter: ["#EFE8D9", "mesh"], vamp: ["#EFE8D9", "mesh"], toecap: ["#9BAA86", "suede"], mudguard: ["#9BAA86", "suede"], heel: ["#8E9195", "suede"], heeltab: ["#8E2A2E", "leather"], eyestay: ["#8E9195", "suede"], tongue: ["#EFE8D9", "mesh"], lining: ["#EFE8D9", "knit"], badge: ["#8E2A2E", "leather"], laces: ["#EFE8D9", "cotton"], midsole: ["#F3EDE1", "eva"], outsole: ["#5C5F63", "rubber"] },
+  },
+  {
+    id: "y2k-tech-runner", name: "Y2K Tech Runner", inspired: "Tech-Runner der 2000er mit Silber-Akzenten (z. B. ASICS Gel-Kayano 14)",
+    text: "Viele Mesh-Panels, silberne Overlays, kräftige ausgestellte Sohle.",
+    soleH: 40,
+    shape: { collar: 0.1, soleType: "runner", toeSpring: 15, toeWidth: 0.96, toeHeight: 1, toeRound: 0.45, width: 1.01, soleFlare: 3, toecapStyle: "cap", toecapLength: 0.45, mudguardHeight: 0.75, heelCounter: 1.4, eyestayWidth: 0.2, eyelets: 7, tongueHeight: 8, collarDip: 1.2, shellToe: 0, laceWidth: 6, tongueSplit: false },
+    parts: { quarter: ["#F4F4F2", "mesh"], vamp: ["#F4F4F2", "mesh"], toecap: ["#C9CBCE", "ripstop"], mudguard: ["#C9CBCE", "ripstop"], heel: ["#5C6B7A", "suede"], heeltab: ["#C9CBCE", "ripstop"], eyestay: ["#5C6B7A", "suede"], tongue: ["#F4F4F2", "mesh"], lining: ["#F4F4F2", "knit"], badge: ["#5C6B7A", "leather"], laces: ["#F4F4F2", "cotton"], midsole: ["#F6F5F1", "eva"], outsole: ["#C9CBCE", "rubber"] },
+  },
+  {
+    id: "canvas-high", name: "Canvas Classic High", inspired: "Canvas-Basketballschuh mit Gummikappe (z. B. Converse Chuck Taylor)",
+    text: "Hoher Canvas-Schaft ohne Overlays, vulkanisierte Sohle mit Gummi-Zehenkappe und umlaufendem Band, viele Ösen.",
+    soleH: 24,
+    shape: { collar: 1, soleType: "vulc", toeSpring: 6, toeWidth: 1, toeHeight: 0.95, toeRound: 0.85, width: 0.99, soleFlare: 0, toecapStyle: "none", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 0, eyestayWidth: 0.12, eyelets: 9, tongueHeight: 3, collarDip: 0.5, shellToe: 0.55, laceWidth: 6, tongueSplit: false },
+    parts: { quarter: ["#1A1B1C", "canvas"], vamp: ["#1A1B1C", "canvas"], toecap: ["#1A1B1C", "canvas"], mudguard: ["#1A1B1C", "canvas"], heel: ["#1A1B1C", "canvas"], heeltab: ["#1A1B1C", "canvas"], eyestay: ["#1A1B1C", "canvas"], tongue: ["#1A1B1C", "canvas"], lining: ["#F2EEE6", "canvas"], badge: ["#F2EEE6", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#F2EEE6", "rubber"], outsole: ["#C9B28A", "rubber"] },
+  },
+  {
+    id: "canvas-low", name: "Canvas Classic Low", inspired: "Flacher Canvas-Klassiker mit Gummikappe (z. B. Converse Chuck Taylor Ox)",
+    text: "Leichter Canvas-Low auf flacher vulkanisierter Sohle, runde Spitze mit Gummikappe.",
+    soleH: 23,
+    shape: { collar: 0, soleType: "vulc", toeSpring: 6, toeWidth: 1, toeHeight: 0.95, toeRound: 0.85, width: 0.99, soleFlare: 0, toecapStyle: "none", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 0, eyestayWidth: 0.12, eyelets: 7, tongueHeight: 2, collarDip: 0.7, shellToe: 0.55, laceWidth: 6, tongueSplit: false },
+    parts: { quarter: ["#EFE8D9", "canvas"], vamp: ["#EFE8D9", "canvas"], toecap: ["#EFE8D9", "canvas"], mudguard: ["#EFE8D9", "canvas"], heel: ["#EFE8D9", "canvas"], heeltab: ["#EFE8D9", "canvas"], eyestay: ["#EFE8D9", "canvas"], tongue: ["#EFE8D9", "canvas"], lining: ["#EFE8D9", "canvas"], badge: ["#283149", "leather"], laces: ["#EFE8D9", "cotton"], midsole: ["#F2EEE6", "rubber"], outsole: ["#F2EEE6", "rubber"] },
+  },
+  {
+    id: "work-boot", name: "Work Boot 6", inspired: "Klassischer Arbeitsstiefel aus Nubuk (z. B. Timberland 6-Inch)",
+    text: "Stiefelschaft aus Nubuk, gepolsterter Kragen, runde kräftige Spitze, Profilsohle mit vernähtem Rand.",
+    soleH: 34,
+    shape: { collar: 1.25, soleType: "lug", toeSpring: 9, toeWidth: 1.12, toeHeight: 1.2, toeRound: 0.85, width: 1.06, soleFlare: 1, toecapStyle: "cap", toecapLength: 0.55, mudguardHeight: 0, heelCounter: 1.1, eyestayWidth: 0.18, eyelets: 8, tongueHeight: 10, collarDip: 0.5, shellToe: 0, laceWidth: 4.5, tongueSplit: false },
+    parts: { quarter: ["#C99A55", "nubuck"], vamp: ["#C99A55", "nubuck"], toecap: ["#C99A55", "nubuck"], mudguard: ["#C99A55", "nubuck"], heel: ["#C99A55", "nubuck"], heeltab: ["#C99A55", "nubuck"], eyestay: ["#C99A55", "nubuck"], tongue: ["#C99A55", "nubuck"], lining: ["#3B2A22", "leather"], badge: ["#3B2A22", "leather"], laces: ["#A9875B", "cotton"], midsole: ["#C99A55", "rubber"], outsole: ["#3B2A22", "rubber"] },
   },
 ];
 
