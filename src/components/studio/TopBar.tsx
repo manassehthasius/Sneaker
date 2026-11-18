@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useStudio } from "@/lib/store";
 import { Button } from "./ui";
 
@@ -45,6 +46,7 @@ export function TopBar({ onToggleLeft }: { onToggleLeft: () => void }) {
           aria-label="Name des Entwurfs"
         />
       </label>
+      <Link href="/produktion" className="rounded-md px-2 py-1.5 text-[13px] text-muted hover:bg-raise hover:text-fg">Produktions-Handbuch</Link>
       <div className="flex-1" />
       <div className="inline-flex overflow-hidden rounded-lg border border-line-2" role="group" aria-label="Modus">
         {(["beg", "pro"] as const).map((m) => (

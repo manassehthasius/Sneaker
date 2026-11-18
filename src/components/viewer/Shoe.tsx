@@ -4,7 +4,7 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { buildShoe, EXPLODE } from "@/lib/shoe/geometry";
-import { createMaterial, setMaterialColor, threadColor } from "@/lib/shoe/materials";
+import { applyLabel, createLabelTexture, createMaterial, createTreadMaterial, setMaterialColor, threadColor } from "@/lib/shoe/materials";
 import type { MaterialId, PartId } from "@/lib/shoe/types";
 import { useStudio } from "@/lib/store";
 
@@ -36,8 +36,14 @@ export function Shoe() {
   const bauStep = useStudio((s) => s.bauStep);
   const explode = useStudio((s) => s.explode);
 
-  const geo = useMemo(() => buildShoe(design.soleH), [design.soleH]);
-  useEffect(() => () => geo.parts.forEach((p) => [p.surface, p.stitches, p.eyelets, p.dark].forEach((g) => g?.dispose())), [geo]);
+  const perforation = design.details?.perforation ?? false;
+  const doubleStitch = design.details?.doubleStitch ?? true;
+  const logoText = design.details?.logoText ?? "SOLE";
+  const geo = useMemo(() => buildShoe(design.soleH, { perforation, doubleStitch }), [design.soleH, perforation, doubleStitch]);
+  useEffect(
+    () => () => geo.parts.forEach((p) => [p.surface, p.stitches, p.eyelets, p.dark, p.label, p.tread, p.aglets].forEach((g) => g?.dispose())),
+    [geo],
+  );
 
   // Materialien pro Teil. Neu angelegt wird nur, wenn sich ein Material ändert; Farben werden direkt aktualisiert.
   const matKey = PART_IDS.map((id) => design.parts[id].m).join(",");
@@ -57,6 +63,19 @@ export function Shoe() {
       pm.thread.color.set(threadColor(style.c));
     });
   }, [design, mats]);
+
+  // Sohlenprofil, Logo, Senkel-Enden
+  const tread = useMemo(() => createTreadMaterial("#ffffff"), []);
+  const aglet = useMemo(() => new THREE.MeshPhysicalMaterial({ roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.15 }), []);
+  const labelTex = useMemo(() => createLabelTexture(logoText), [logoText]);
+  const label = useMemo(() => new THREE.MeshStandardMaterial({ transparent: true, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }), []);
+  useEffect(() => () => labelTex.dispose(), [labelTex]);
+  useLayoutEffect(() => {
+    setMaterialColor(tread, "rubber", design.parts.outsole.c);
+    aglet.color.set(threadColor(design.parts.laces.c));
+    applyLabel(label, labelTex, design.parts.badge.c);
+  }, [design, tread, aglet, label, labelTex]);
+  useEffect(() => () => { tread.dispose(); aglet.dispose(); label.dispose(); }, [tread, aglet, label]);
 
   const metal = useMemo(() => new THREE.MeshStandardMaterial({ color: "#c9c4b8", metalness: 1, roughness: 0.32 }), []);
   const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: "#0d0c0b", roughness: 1 }), []);
@@ -120,6 +139,9 @@ export function Shoe() {
             {p.stitches && <mesh geometry={p.stitches} material={pm.thread} raycast={() => null} />}
             {p.eyelets && <mesh geometry={p.eyelets} material={metal} raycast={() => null} />}
             {p.dark && <mesh geometry={p.dark} material={dark} raycast={() => null} />}
+            {p.label && <mesh geometry={p.label} material={label} raycast={() => null} />}
+            {p.aglets && <mesh geometry={p.aglets} material={aglet} castShadow raycast={() => null} />}
+            {p.tread && <mesh geometry={p.tread} material={tread} onClick={onClick(p.part)} />}
           </group>
         );
       })}

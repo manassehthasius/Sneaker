@@ -1,6 +1,8 @@
 "use client";
 
 import { ContactShadows, Environment, OrbitControls } from "@react-three/drei";
+import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
+import { ToneMappingMode } from "postprocessing";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useRef } from "react";
 import * as THREE from "three";
@@ -64,27 +66,41 @@ function CameraRig() {
   return null;
 }
 
+function Effects() {
+  const quality = useStudio((s) => s.quality);
+  if (quality === "fast") return null;
+  return (
+    <EffectComposer multisampling={4} enableNormalPass={false}>
+      <N8AO aoRadius={0.018} distanceFalloff={0.6} intensity={2.4} quality="high" halfRes={false} color="#1a1612" />
+      <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+    </EffectComposer>
+  );
+}
+
 export default function Viewport() {
   return (
     <Canvas
       shadows
       dpr={[1, 2]}
       camera={{ position: VIEWS.threeQuarter, fov: 30, near: 0.01, far: 10 }}
-      gl={{ antialias: true, preserveDrawingBuffer: true, alpha: true }}
+      gl={{ antialias: true, preserveDrawingBuffer: true }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.NeutralToneMapping;
         gl.toneMappingExposure = 1.0;
       }}
       style={{ touchAction: "none" }}
     >
+      {/* Neutral grau: nur so lassen sich Farben ehrlich beurteilen */}
+      <color attach="background" args={["#979797"]} />
       <Suspense fallback={null}>
-        <Environment files="/env/studio.hdr" environmentIntensity={1.05} />
+        <Environment files="/env/studio.hdr" environmentIntensity={1.0} />
         <Shoe />
-        <ContactShadows position={[0, 0.0004, 0]} opacity={0.75} scale={0.7} blur={2.2} far={0.12} resolution={1024} color="#1a1816" frames={Infinity} />
+        <ContactShadows position={[0, 0.0004, 0]} opacity={0.7} scale={0.7} blur={2.4} far={0.12} resolution={1024} color="#1a1816" frames={Infinity} />
+        <Effects />
       </Suspense>
       <directionalLight
         position={[0.25, 0.9, 0.35]}
-        intensity={0.7}
+        intensity={0.75}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
@@ -96,11 +112,13 @@ export default function Viewport() {
         shadow-camera-near={0.1}
         shadow-camera-far={2}
       />
+      {/* Streiflicht von hinten: lässt Wildleder-Flor und Kanten aufleuchten */}
+      <directionalLight position={[-0.5, 0.35, -0.4]} intensity={0.35} color="#fff4e6" />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0002, 0]} receiveShadow>
         <planeGeometry args={[2, 2]} />
         <shadowMaterial opacity={0.22} />
       </mesh>
-      <OrbitControls makeDefault target={TARGET} minDistance={0.16} maxDistance={1.1} enableDamping dampingFactor={0.08} />
+      <OrbitControls makeDefault target={TARGET} minDistance={0.14} maxDistance={1.1} enableDamping dampingFactor={0.08} />
       <CameraRig />
     </Canvas>
   );

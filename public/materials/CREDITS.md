@@ -12,7 +12,7 @@ Die Farbtexturen wurden mit `tools/fetch_assets.py` in Graustufen umgewandelt, d
 | Strick (`knit`) | ambientCG | Fabric085 |
 | Baumwolle, Schnürsenkel (`cotton`) | ambientCG | Fabric030 |
 | Gummi (`rubber`) | ambientCG | Rubber004 |
-| Mesh, Ripstop, EVA | selbst erzeugt | `tools/fetch_assets.py` |
+| Mesh, Ripstop, EVA, Sohlenprofil (`tread`) | selbst erzeugt | `tools/fetch_assets.py` |
 | Studiolicht (`/env/studio.hdr`) | Poly Haven | studio_small_09 |
 
 - Poly Haven: https://polyhaven.com

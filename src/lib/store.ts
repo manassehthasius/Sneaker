@@ -27,6 +27,10 @@ interface StudioState {
   view: { preset: ViewPreset; nonce: number };
   projects: SavedProject[];
   toast: string | null;
+  /** Darstellungsqualität: hoch = mit Ambient Occlusion */
+  quality: "high" | "fast";
+  setQuality: (q: "high" | "fast") => void;
+  setDetails: (patch: Partial<NonNullable<Design["details"]>>) => void;
 
   select: (id: PartId) => void;
   setParts: (ids: PartId[], patch: Partial<PartStyle>) => void;
@@ -69,6 +73,25 @@ function writeProjects(list: SavedProject[]) {
   }
 }
 
+const DRAFT_KEY = "sole-studio.draft.v1";
+function readDraft(): SavedProject | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    const d = raw ? (JSON.parse(raw) as SavedProject) : null;
+    return d && d.design && d.design.parts ? d : null;
+  } catch {
+    return null;
+  }
+}
+/** Aktuellen Entwurf laufend sichern, damit beim Neuladen nichts verloren geht */
+export function writeDraft(s: { projectId: string; name: string; design: Design }) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: s.projectId, name: s.name, design: s.design, updatedAt: Date.now() }));
+  } catch {
+    /* Speicher nicht verfügbar */
+  }
+}
+
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useStudio = create<StudioState>((set, get) => {
@@ -86,6 +109,14 @@ export const useStudio = create<StudioState>((set, get) => {
     view: { preset: "threeQuarter", nonce: 0 },
     projects: [],
     toast: null,
+    quality: "high",
+    setQuality: (q) => set({ quality: q }),
+    setDetails: (patch) =>
+      set((s) => {
+        const design = clone(s.design);
+        design.details = { ...design.details, ...patch };
+        return { ...push(s), design };
+      }),
 
     select: (id) => set({ selected: id }),
     setParts: (ids, patch) =>
@@ -142,7 +173,10 @@ export const useStudio = create<StudioState>((set, get) => {
       writeProjects(list);
       set({ projects: list });
     },
-    hydrate: () => set({ projects: readProjects() }),
+    hydrate: () => {
+      const draft = readDraft();
+      set(draft ? { projects: readProjects(), design: draft.design, name: draft.name, projectId: draft.id } : { projects: readProjects() });
+    },
     notify: (msg) => {
       if (toastTimer) clearTimeout(toastTimer);
       set({ toast: msg });

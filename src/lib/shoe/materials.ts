@@ -99,3 +99,58 @@ export function threadColor(hex: string) {
   c.setHSL(hsl.h, hsl.s * 0.9, hsl.l > 0.5 ? hsl.l - 0.12 : hsl.l + 0.1);
   return "#" + c.getHexString();
 }
+
+/** Laufsohlen-Unterseite: Gummi mit Fischgrat-Profil */
+export function createTreadMaterial(hex: string, aniso = 8): THREE.MeshPhysicalMaterial {
+  const m = createMaterial("rubber", hex, aniso);
+  const n = loader.load("/materials/tread/normal.jpg");
+  n.wrapS = n.wrapT = THREE.RepeatWrapping;
+  n.colorSpace = THREE.NoColorSpace;
+  n.repeat.set(100 / 34, 100 / 34);
+  n.anisotropy = aniso;
+  m.normalMap = n;
+  m.normalScale.set(1.4, 1.4);
+  m.roughness = 0.85;
+  return m;
+}
+
+/** Text für den Logo-Patch als Textur (weisser Text auf transparentem Grund, wird eingefärbt) */
+export function createLabelTexture(text: string): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 236;
+  const ctx = c.getContext("2d")!;
+  ctx.clearRect(0, 0, c.width, c.height);
+  const label = (text || "").toUpperCase().slice(0, 12);
+  let size = 130;
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const font = (px: number) => `900 ${px}px "Archivo", "Arial Black", "Helvetica Neue", Arial, sans-serif`;
+  ctx.font = font(size);
+  while (ctx.measureText(label).width > c.width * 0.78 && size > 30) {
+    size -= 4;
+    ctx.font = font(size);
+  }
+  ctx.fillText(label, c.width / 2, c.height / 2 + size * 0.04);
+  const t = new THREE.CanvasTexture(c);
+  t.flipY = false;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+/** Kontrastfarbe für Prägung/Druck auf dem Patch */
+export function labelColor(hex: string) {
+  const c = new THREE.Color(hex);
+  const hsl = { h: 0, s: 0, l: 0 };
+  c.getHSL(hsl);
+  c.setHSL(hsl.h, hsl.s * 0.6, hsl.l > 0.55 ? Math.max(0.12, hsl.l - 0.5) : Math.min(0.94, hsl.l + 0.55));
+  return c;
+}
+
+export function applyLabel(m: THREE.MeshStandardMaterial, tex: THREE.Texture, badgeHex: string) {
+  m.map = tex;
+  m.color.copy(labelColor(badgeHex));
+  m.needsUpdate = true;
+}

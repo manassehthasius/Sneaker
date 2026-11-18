@@ -178,6 +178,24 @@ def make_eva() -> None:
     print("procedural eva")
 
 
+def make_tread() -> None:
+    """Fischgrat-Profil (Herringbone) für die Laufsohle, wie bei klassischen Court-Schuhen."""
+    n = 512
+    h = Image.new("L", (n, n), 0)
+    d = ImageDraw.Draw(h)
+    step = 16
+    for row in range(0, n, 64):
+        flip = (row // 64) % 2
+        for x in range(-n, n * 2, step):
+            if flip:
+                d.line([(x, row), (x + 32, row + 64)], fill=255, width=7)
+            else:
+                d.line([(x + 32, row), (x, row + 64)], fill=255, width=7)
+    h = h.filter(ImageFilter.GaussianBlur(1.4))
+    save(height_to_normal(h, 5.0), "tread", "normal")
+    print("procedural tread")
+
+
 def fetch_hdri() -> None:
     os.makedirs(ENV_OUT, exist_ok=True)
     files = json.loads(get(f"https://api.polyhaven.com/files/{HDRI}"))
@@ -188,6 +206,12 @@ def fetch_hdri() -> None:
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "--procedural":
+        make_mesh()
+        make_ripstop()
+        make_eva()
+        make_tread()
+        return
     for mat, asset in POLYHAVEN.items():
         fetch_polyhaven(mat, asset)
     for mat, asset in AMBIENTCG.items():
@@ -195,6 +219,7 @@ def main() -> None:
     make_mesh()
     make_ripstop()
     make_eva()
+    make_tread()
     fetch_hdri()
 
 

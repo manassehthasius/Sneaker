@@ -40,4 +40,15 @@ export interface Design {
   /** Sichtbare Sohlenhöhe in Millimetern (Rand oben bis Boden) */
   soleH: number;
   parts: Record<PartId, PartStyle>;
+  /** Details, die nicht an einer Farbe hängen */
+  details?: DesignDetails;
+}
+
+export interface DesignDetails {
+  /** Perforation (Luftlöcher) auf der Zehenkappe */
+  perforation?: boolean;
+  /** Text auf dem Logo-Patch */
+  logoText?: string;
+  /** Doppelte Nähte an den Overlays */
+  doubleStitch?: boolean;
 }

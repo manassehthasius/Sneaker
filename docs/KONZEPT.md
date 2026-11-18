@@ -32,6 +32,7 @@ KI-gestütztes Designstudio für eine eigene Sneaker-Marke. Visuelle Fassung des
 ## Phasen
 
 1. **Fundament und Designer** (umgesetzt): 3D-Low-Top mit 13 Teilen, echte Materialien, Studiolicht, Sohlenregler, 9 Vorlagen, Rückgängig/Wiederholen, lokal speichern, PNG-Export, Teile-Karten, Regel-Check, Bau-Modus mit Explosionsansicht, iPad-Layout.
+   - **Ausbau Realismus und Produktion** (umgesetzt): Ambient Occlusion und Streiflicht, schlankere Spitze, Doppelnähte, Perforation, Logo-Text auf dem Patch, Fischgrat-Profil, Senkel-Enden mit Aglets, Rille in der Cupsole, Qualitätsschalter, automatisches Sichern des Entwurfs, Produktions-Check mit Kennzeichnungs-Vorschau, Produktions-Handbuch unter `/produktion` mit Kostenrechner und Checkliste.
 2. **Bibliothek, Sync und Moodboard:** Supabase-Login, Cloud-Speicher, Versionen und Vergleich, Moodboard mit Pipette, Mockup-Szenen (Studio, Strasse, Parkhaus), Röntgenblick, Bauweise wählen.
 3. **KI-Assistent:** Text zu Design, 4 Varianten, Referenzbild-Analyse, Begründungen, Kostenanzeige und Monatslimit.
 4. **Ausbau und Marke:** Chunky-Grundform, eigenes Logo, Brand-DNA, Kollektionen, KI-Feedback, Rendering-Video, feinere Details.

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { useStudio } from "@/lib/store";
+import { useStudio, writeDraft } from "@/lib/store";
 import { BauPanel } from "./BauPanel";
 import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
@@ -22,6 +22,8 @@ export default function Studio() {
 
   useEffect(() => {
     hydrate();
+    // Nur in der Entwicklung: Zugriff für automatische Tests
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __studio: typeof useStudio }).__studio = useStudio;
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
@@ -31,7 +33,17 @@ export default function Studio() {
       else if (e.key.toLowerCase() === "s") { e.preventDefault(); st.save(); }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const unsub = useStudio.subscribe((st, prev) => {
+      if (st.design === prev.design && st.name === prev.name) return;
+      if (t) clearTimeout(t);
+      t = setTimeout(() => writeDraft(st), 400);
+    });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      unsub();
+      if (t) clearTimeout(t);
+    };
   }, [hydrate]);
 
   return (

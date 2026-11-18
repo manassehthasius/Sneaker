@@ -19,6 +19,8 @@ export function ViewportTools() {
   const setView = useStudio((s) => s.setView);
   const bauStep = useStudio((s) => s.bauStep);
   const setBau = useStudio((s) => s.setBau);
+  const quality = useStudio((s) => s.quality);
+  const setQuality = useStudio((s) => s.setQuality);
   const dragging = useRef(false);
 
   const soleType = soleH < 38 ? "Court-Cupsole" : soleH < 48 ? "Plateau" : "Chunky";
@@ -33,14 +35,24 @@ export function ViewportTools() {
             </button>
           ))}
         </div>
+        <div className="pointer-events-auto flex gap-2">
+        <button
+          type="button"
+          onClick={() => setQuality(quality === "high" ? "fast" : "high")}
+          title="Hohe Qualität: weiche Schatten in Falten und Kanten. Schnell: flüssiger auf älteren Geräten."
+          className="glass min-h-9 rounded-xl px-3 text-[12.5px] text-[#efeae0] hover:bg-black/70"
+        >
+          Qualität: {quality === "high" ? "Hoch" : "Schnell"}
+        </button>
         <button
           type="button"
           onClick={() => setBau(bauStep === null ? 0 : null)}
           aria-pressed={bauStep !== null}
-          className={`pointer-events-auto min-h-9 rounded-xl px-3.5 text-[12.5px] font-semibold ${bauStep !== null ? "bg-accent text-accent-ink" : "glass text-[#efeae0] hover:bg-black/70"}`}
+          className={`min-h-9 rounded-xl px-3.5 text-[12.5px] font-semibold ${bauStep !== null ? "bg-accent text-accent-ink" : "glass text-[#efeae0] hover:bg-black/70"}`}
         >
           {bauStep !== null ? "Bau-Modus beenden" : "Bau-Modus"}
         </button>
+        </div>
       </div>
 
       {bauStep === null && (

@@ -59,9 +59,9 @@ const smooth = (a: number, b: number, x: number) => {
 /* ------------------------------------------------------------------ */
 
 /** Halbe Breite des Fussabdrucks (ohne Abrundung an Ferse und Spitze). */
-const halfWidthBase = spline([[0, 33], [0.2, 34], [0.35, 35], [0.5, 38], [0.65, 45], [0.74, 47], [0.86, 44], [1, 38]]);
+const halfWidthBase = spline([[0, 33], [0.2, 34], [0.35, 35], [0.5, 38], [0.65, 45], [0.74, 47], [0.86, 43], [1, 35]]);
 /** Höhe des Leistens über der Sohle in der Mitte (Rist). */
-const height = spline([[0, 72], [0.06, 80], [0.15, 88], [0.25, 92], [0.35, 86], [0.45, 74], [0.55, 60], [0.65, 47], [0.75, 38], [0.85, 31], [0.93, 25], [1, 15]]);
+const height = spline([[0, 72], [0.06, 80], [0.15, 88], [0.25, 92], [0.35, 86], [0.45, 74], [0.55, 60], [0.65, 47], [0.75, 38], [0.85, 30], [0.93, 23], [1, 13]]);
 /** «Eckigkeit» des Querschnitts (2 = Ellipse, höher = kantiger). */
 const squareness = spline([[0, 2.2], [0.2, 2.4], [0.5, 2.45], [0.75, 2.2], [1, 2.0]]);
 /** Oberkante des Kragens (Topline) im Fersenbereich. */
@@ -77,7 +77,7 @@ const DEFAULT_SHAPE: ShapeParams = { toeSpring: 11 };
 export function halfWidth(t: number): number {
   let cap = 1;
   if (t < 0.12) cap = Math.sqrt(Math.max(0, 1 - Math.pow(1 - t / 0.12, 2)));
-  else if (t > 0.8) cap = Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.8) / 0.2, 2)));
+  else if (t > 0.78) cap = Math.pow(Math.max(0, 1 - Math.pow((t - 0.78) / 0.22, 2.2)), 0.55);
   return halfWidthBase(t) * cap;
 }
 
@@ -179,6 +179,8 @@ interface PanelSpec {
   segB: number;
   /** Welche Kanten eine Naht bekommen */
   stitch?: ("lo" | "hi" | "a0" | "a1")[];
+  /** Bekommt bei «Doppelnaht» eine zweite Nahtreihe */
+  double?: boolean;
   /** Inneres Futter: Normale nach innen */
   inner?: boolean;
   noWalls?: boolean;
@@ -198,6 +200,17 @@ export interface PartGeometry {
   eyelets?: THREE.BufferGeometry;
   /** Dunkle Löcher, Innenteile */
   dark?: THREE.BufferGeometry;
+  /** Fläche für den Logo-Text (UV 0..1 über den Patch) */
+  label?: THREE.BufferGeometry;
+  /** Sohlenprofil an der Unterseite */
+  tread?: THREE.BufferGeometry;
+  /** Kunststoff-Enden der Schnürsenkel */
+  aglets?: THREE.BufferGeometry;
+}
+
+export interface BuildOptions {
+  doubleStitch?: boolean;
+  perforation?: boolean;
 }
 
 export interface ShoeGeometry {
@@ -285,7 +298,7 @@ function orientOutward(g: THREE.BufferGeometry) {
 /* Haupt-Generator                                                     */
 /* ------------------------------------------------------------------ */
 
-export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): ShoeGeometry {
+export function buildShoe(soleH: number, opts: BuildOptions = {}, shapeIn: Partial<ShapeParams> = {}): ShoeGeometry {
   const shape: ShapeParams = { ...DEFAULT_SHAPE, ...shapeIn };
   const opening = buildOpening(shape);
   const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3(), tmpC = new THREE.Vector3(), tmpD = new THREE.Vector3();
@@ -293,12 +306,15 @@ export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): Sh
   /** Punkt und Normale auf dem Leisten mit Versatz. */
   function surf(t: number, s: number, offset: number, out: THREE.Vector3, nOut: THREE.Vector3) {
     const e = 1e-3;
-    const t0 = clamp(t - e, 1e-4, 1), t1 = clamp(t + e, 1e-4, 1);
-    lastPoint(t1, s, shape, tmpA); lastPoint(t0, s, shape, tmpB);
+    // An der äussersten Spitze wird die Fläche spitz; dort die Normale von etwas weiter hinten nehmen
+    const tn = Math.min(t, 0.96);
+    const t0n = clamp(tn - e, 1e-4, 1), t1n = clamp(tn + e, 1e-4, 1);
+    lastPoint(t1n, s, shape, tmpA); lastPoint(t0n, s, shape, tmpB);
     const dt = tmpA.sub(tmpB);
-    lastPoint(t, s + e, shape, tmpC); lastPoint(t, s - e, shape, tmpD);
+    lastPoint(tn, s + e, shape, tmpC); lastPoint(tn, s - e, shape, tmpD);
     const ds = tmpC.sub(tmpD);
     nOut.crossVectors(dt, ds).normalize();
+    if (t > 0.96) nOut.add(tmpD.set(1, 0, 0).multiplyScalar(1.6 * smooth(0.96, 1, t))).normalize();
     if (!isFinite(nOut.x) || nOut.lengthSq() < 0.5) nOut.set(-1, 0, 0);
     lastPoint(t, s, shape, out);
     // Sicherheitsprüfung: Normale muss vom Inneren des Leistens weg zeigen
@@ -386,14 +402,14 @@ export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): Sh
 
       // Nähte
       if (spec.stitch) {
-        for (const edge of spec.stitch) {
+        const insets = spec.double && opts.doubleStitch ? [2.0, 4.6] : [2.6];
+        for (const edge of spec.stitch) for (const insetMM of insets) {
           const pts: THREE.Vector3[] = [];
           const norms: THREE.Vector3[] = [];
           const count = 80;
           for (let k = 0; k <= count; k++) {
             const f = k / count;
             let t: number, v: number;
-            const insetMM = 2.6;
             if (spec.mode === "v") {
               v = lerp(spec.a0, spec.a1, f);
               if (edge === "lo" || edge === "hi") {
@@ -443,10 +459,10 @@ export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): Sh
   const specs: PanelSpec[] = [
     { part: "quarter", sides: both, layer: 0, thick: 2.6, mode: "v", a0: 0, a1: 1, lo: () => 0, hi: seamQV, segA: 56, segB: 28 },
     { part: "vamp", sides: both, layer: 0, thick: 2.6, mode: "v", a0: 0, a1: 1, lo: seamQV, hi: () => 1, segA: 48, segB: 28, stitch: ["lo"] },
-    { part: "mudguard", sides: both, layer: 0.9, thick: 0.9, mode: "t", a0: 0, a1: 0.9, lo: mudLo, hi: () => 1, segA: 90, segB: 6, stitch: ["lo"], abs: true },
-    { part: "toecap", sides: both, layer: 1.7, thick: 0.9, mode: "v", a0: 0, a1: 1, lo: toeLine, hi: () => 1, segA: 24, segB: 24, stitch: ["lo"], abs: true },
-    { part: "heel", sides: both, layer: 1.7, thick: 0.9, mode: "v", a0: 0, a1: 1, lo: () => 0, hi: heelLine, segA: 20, segB: 24, stitch: ["hi"] },
-    { part: "eyestay", sides: both, layer: 0.9, thick: 0.9, mode: "t", a0: 0.285, a1: eyeEnd, lo: () => 0, hi: eyeHi, segA: 36, segB: 5, stitch: ["hi"] },
+    { part: "mudguard", sides: both, layer: 0.9, thick: 0.9, mode: "t", a0: 0, a1: 0.9, lo: mudLo, hi: () => 1, segA: 90, segB: 6, stitch: ["lo"], abs: true, double: true },
+    { part: "toecap", sides: both, layer: 1.7, thick: 0.9, mode: "v", a0: 0, a1: 1, lo: toeLine, hi: () => 1, segA: 24, segB: 24, stitch: ["lo"], abs: true, double: true },
+    { part: "heel", sides: both, layer: 1.7, thick: 0.9, mode: "v", a0: 0, a1: 1, lo: () => 0, hi: heelLine, segA: 20, segB: 24, stitch: ["hi"], double: true },
+    { part: "eyestay", sides: both, layer: 0.9, thick: 0.9, mode: "t", a0: 0.285, a1: eyeEnd, lo: () => 0, hi: eyeHi, segA: 36, segB: 5, stitch: ["hi"], double: true },
     { part: "heeltab", sides: both, layer: 2.6, thick: 1.0, mode: "v", a0: -0.16, a1: 0.24, lo: () => 0, hi: () => 0.034, segA: 4, segB: 12, stitch: ["hi"], extraZ: (_t, v) => (v < 0 ? (-v / 0.16) * 10 : 0) },
     { part: "badge", sides: [1], layer: 2.6, thick: 0.7, mode: "v", a0: 0.34, a1: 0.46, lo: () => 0.155, hi: () => 0.245, segA: 10, segB: 5 },
     // Futter: Innenfläche über den ganzen Schaft
@@ -462,6 +478,53 @@ export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): Sh
     } else {
       parts.set(spec.part, { part: spec.part, surface, stitches });
     }
+  }
+
+  /* ---------------- Perforation auf der Zehenkappe ---------------- */
+  if (opts.perforation) {
+    const holes: THREE.BufferGeometry[] = [];
+    const P = new THREE.Vector3(), N = new THREE.Vector3();
+    for (const side of both) {
+      for (let row = 0; row < 9; row++) {
+        const v = 0.06 + row * 0.075;
+        const tStart = toeLine(v) + 0.03;
+        const nCols = Math.floor((0.975 - tStart) / 0.019);
+        for (let c = 0; c <= nCols; c++) {
+          const t = tStart + c * 0.019 + (row % 2 ? 0.0095 : 0);
+          if (t > 0.975) continue;
+          const sAbs = v;
+          if (side === -1 && sAbs < 0.04) continue;
+          surf(t, side * sAbs, 1.7 + 0.06, P, N);
+          const pt = new THREE.Vector3(P.x - L / 2, P.z, P.y);
+          const nt = new THREE.Vector3(N.x, N.z, N.y).normalize();
+          const g = new THREE.CircleGeometry(0.95, 10);
+          g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), nt));
+          g.translate(pt.x, pt.y, pt.z);
+          holes.push(g);
+        }
+      }
+    }
+    parts.get("toecap")!.dark = mergeGeometries(holes)!;
+  }
+
+  /* ---------------- Logo-Fläche auf dem Patch ---------------- */
+  {
+    const b = new Builder();
+    const P = new THREE.Vector3(), N = new THREE.Vector3();
+    const sa = 21, sb = 9, grid: number[] = [];
+    for (let i = 0; i < sa; i++) for (let j = 0; j < sb; j++) {
+      const u = i / (sa - 1), w = j / (sb - 1);
+      const t = lerp(0.155, 0.245, u), v = lerp(0.34, 0.46, w);
+      surf(t, sOf(t, v, 1), 2.6 + 0.07, P, N);
+      grid.push(b.vertex(P, N, u, w));
+    }
+    for (let i = 0; i < sa - 1; i++) for (let j = 0; j < sb - 1; j++) {
+      const a = grid[i * sb + j], c = grid[(i + 1) * sb + j], d = grid[(i + 1) * sb + j + 1], e = grid[i * sb + j + 1];
+      b.tri(a, c, d); b.tri(a, d, e);
+    }
+    const g = b.build(true);
+    orientToNormals(g);
+    parts.get("badge")!.label = g;
   }
 
   /* ---------------- Zunge ---------------- */
@@ -606,6 +669,7 @@ export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): Sh
   }
   {
     const geos: THREE.BufferGeometry[] = [];
+    const aglets: THREE.BufferGeometry[] = [];
     const lat = eyelets[0], med = eyelets[1];
     const n = eyeT.length;
     const lift = (a: THREE.Vector3, b: THREE.Vector3, h: number) => {
@@ -642,18 +706,33 @@ export function buildShoe(soleH: number, shapeIn: Partial<ShapeParams> = {}): Sh
     };
     loop(1); loop(-1);
     const end = (dir: number, len: number) => {
+      // Das Ende fällt über die Ösenleiste und liegt seitlich am Schaft an
+      const onSurf = (t: number, v: number, off: number) => {
+        const p = new THREE.Vector3(), n = new THREE.Vector3();
+        surf(t, sOf(t, v, dir > 0 ? 1 : -1), off, p, n);
+        return new THREE.Vector3(p.x - L / 2, p.z, p.y);
+      };
       const p0 = knot.clone();
-      const p1 = knot.clone().addScaledVector(sideDir, dir * 9).add(new THREE.Vector3(5, -3, 0));
-      const p2 = knot.clone().addScaledVector(sideDir, dir * (22 + len * 0.15)).add(new THREE.Vector3(9, -len, 0));
-      const c = new THREE.CatmullRomCurve3([p0, p1, p2], false, "centripetal");
-      geos.push(flatTube(c, 24, 7, 1.6));
+      const p1 = knot.clone().addScaledVector(sideDir, dir * 9).add(new THREE.Vector3(3, -1, 0));
+      const p2 = onSurf(0.345, 0.04, 5.5);
+      const p3 = onSurf(0.36 + len * 0.0004, 0.12 + len * 0.004, 3.4);
+      const p4 = onSurf(0.37 + len * 0.0006, 0.16 + len * 0.007, 3.0);
+      const c = new THREE.CatmullRomCurve3([p0, p1, p2, p3, p4], false, "centripetal");
+      geos.push(flatTube(c, 40, 7, 1.6));
+      // Kunststoff-Ende (Aglet)
+      const tip = c.getPointAt(1), dirT = c.getTangentAt(1);
+      const ag = new THREE.CylinderGeometry(1.9, 1.9, 15, 12, 1);
+      ag.translate(0, 7.5, 0);
+      ag.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirT));
+      ag.translate(tip.x - dirT.x * 2, tip.y - dirT.y * 2, tip.z - dirT.z * 2);
+      aglets.push(ag);
     };
     end(1, 30); end(-1, 22);
     // Knoten
     const k = new THREE.SphereGeometry(4.2, 14, 10);
     k.scale(1.3, 0.75, 1.1); k.translate(knot.x, knot.y, knot.z);
     geos.push(k);
-    parts.set("laces", { part: "laces", surface: mergeGeometries(geos.map(stripToIndexed))! });
+    parts.set("laces", { part: "laces", surface: mergeGeometries(geos.map(stripToIndexed))!, aglets: mergeGeometries(aglets.map(stripToIndexed))! });
   }
 
   /* ---------------- Cupsole ---------------- */
@@ -759,7 +838,10 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
   const midRings: Ring[] = [
     { z: (t) => splitAt(t), off: 2.5 },
     { z: (t) => splitAt(t) + 0.7, off: 3.1 },
-    { z: (t) => lerp(splitAt(t), RIM, 0.5), off: 3.1 + bulge },
+    { z: (t) => lerp(splitAt(t), RIM, 0.42), off: 3.1 + bulge },
+    { z: (t) => lerp(splitAt(t), RIM, 0.42) + 0.6, off: 2.55 + bulge },
+    { z: (t) => lerp(splitAt(t), RIM, 0.42) + 1.6, off: 2.55 + bulge },
+    { z: (t) => lerp(splitAt(t), RIM, 0.42) + 2.2, off: 3.1 + bulge },
     { z: () => RIM - 3, off: 3.2 },
     { z: () => RIM - 0.9, off: 2.6 },
     { z: () => RIM, off: 1.7 },
@@ -812,8 +894,16 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
   });
   for (const [a, c, d] of tris) bb.tri(ids[a], ids[c], ids[d]);
   const bottom = bb.build(false);
-  const outGeo = mergeGeometries([stripNormals(outWall), stripNormals(bottom)])!;
+  const outGeo = stripNormals(outWall);
   orientOutward(outGeo);
+  // Unterseite mit Profil: Normalen zeigen nach unten
+  bottom.computeVertexNormals();
+  const bn = bottom.getAttribute("normal");
+  if (bn.getY(0) > 0) {
+    const arr = bottom.getIndex()!.array as Uint32Array | Uint16Array;
+    for (let i = 0; i < arr.length; i += 3) { const t = arr[i + 1]; arr[i + 1] = arr[i + 2]; arr[i + 2] = t; }
+    bottom.computeVertexNormals();
+  }
 
   // Zwischensohle
   const mb = ringsGeometry(midRings);
@@ -837,7 +927,7 @@ function buildSole(soleH: number, shape: ShapeParams): { midsole: PartGeometry; 
 
   return {
     midsole: { part: "midsole", surface: midGeo, stitches },
-    outsole: { part: "outsole", surface: outGeo },
+    outsole: { part: "outsole", surface: outGeo, tread: bottom },
   };
 }
 
