@@ -106,7 +106,7 @@ export function createTreadMaterial(hex: string, aniso = 8): THREE.MeshPhysicalM
   const n = loader.load("/materials/tread/normal.jpg");
   n.wrapS = n.wrapT = THREE.RepeatWrapping;
   n.colorSpace = THREE.NoColorSpace;
-  n.repeat.set(100 / 34, 100 / 34);
+  n.repeat.set(100 / 80, 100 / 80);
   n.anisotropy = aniso;
   m.normalMap = n;
   m.normalScale.set(1.4, 1.4);

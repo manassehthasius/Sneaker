@@ -17,7 +17,7 @@ const VIEWS: Record<ViewPreset, [number, number, number]> = {
   front: [0.52, 0.12, 0.04],
   back: [-0.52, 0.12, 0.04],
   top: [0.001, 0.6, 0.02],
-  bottom: [0.02, -0.5, 0.12],
+  bottom: [0.02, -0.66, 0.16],
   explode: [0.42, 0.3, 0.62],
 };
 
@@ -68,10 +68,12 @@ function CameraRig() {
 
 function Effects() {
   const quality = useStudio((s) => s.quality);
+  // Auf Retina-Bildschirmen (z. B. iPad) die Schatten mit halber Auflösung rechnen: kaum sichtbar, deutlich flüssiger
+  const dpr = useThree((s) => s.viewport.dpr);
   if (quality === "fast") return null;
   return (
     <EffectComposer multisampling={4} enableNormalPass={false}>
-      <N8AO aoRadius={0.018} distanceFalloff={0.6} intensity={2.4} quality="high" halfRes={false} color="#1a1612" />
+      <N8AO aoRadius={0.018} distanceFalloff={0.6} intensity={2.4} quality={dpr > 1.5 ? "medium" : "high"} halfRes={dpr > 1.5} depthAwareUpsampling color="#1a1612" />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
     </EffectComposer>
   );
@@ -81,7 +83,7 @@ export default function Viewport() {
   return (
     <Canvas
       shadows
-      dpr={[1, 2]}
+      dpr={[1, 1.75]}
       camera={{ position: VIEWS.threeQuarter, fov: 30, near: 0.01, far: 10 }}
       gl={{ antialias: true, preserveDrawingBuffer: true }}
       onCreated={({ gl }) => {
