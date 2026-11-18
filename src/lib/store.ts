@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { TEMPLATES, type Template } from "./shoe/catalog";
+import type { StylePreset } from "./shoe/models";
 import type { Design, PartId, PartStyle } from "./shoe/types";
 
 export type SceneId = "studio" | "street" | "parking" | "city";
@@ -35,6 +36,8 @@ interface StudioState {
   setDetails: (patch: Partial<NonNullable<Design["details"]>>) => void;
   /** Form ändern. `commit` = neuer Schritt im Verlauf */
   setShape: (patch: Partial<NonNullable<Design["shape"]>>, commit: boolean, soleH?: number) => void;
+  /** Stilrichtung komplett übernehmen (Form, Farben, Materialien, Details) */
+  applyStyle: (st: StylePreset) => void;
   /** Nur die Form eines Modells übernehmen, Farben behalten */
   applyModel: (shape: NonNullable<Design["shape"]>, soleH: number, name?: string) => void;
   autoRotate: boolean;
@@ -125,6 +128,13 @@ export const useStudio = create<StudioState>((set, get) => {
       set((s) => {
         const design = { ...s.design, shape: { ...s.design.shape, ...patch }, soleH: soleH ?? s.design.soleH };
         return commit ? { ...push(s), design } : { design };
+      }),
+    applyStyle: (st) =>
+      set((s) => {
+        const parts = {} as Design["parts"];
+        (Object.keys(st.parts) as (keyof Design["parts"])[]).forEach((id) => (parts[id] = { c: st.parts[id][0], m: st.parts[id][1] }));
+        const design: Design = { soleH: st.soleH, parts, shape: { ...st.shape }, details: { ...s.design.details, perforation: !!st.perforation } };
+        return { ...push(s), design, name: st.name };
       }),
     applyModel: (shape, soleH, name) =>
       set((s) => ({ ...push(s), design: { ...clone(s.design), shape: { ...shape }, soleH }, name: name ?? s.name })),

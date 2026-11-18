@@ -39,6 +39,7 @@ export interface MaterialInfo {
 
 export const MATERIALS: Record<MaterialId, MaterialInfo> = {
   leather: { id: "leather", de: "Glattleder", en: "Smooth Leather" },
+  pebble: { id: "pebble", de: "Genarbtes Leder", en: "Pebbled Leather" },
   suede: { id: "suede", de: "Wildleder", en: "Suede" },
   nubuck: { id: "nubuck", de: "Nubuk", en: "Nubuck" },
   canvas: { id: "canvas", de: "Canvas", en: "Canvas" },
@@ -46,13 +47,14 @@ export const MATERIALS: Record<MaterialId, MaterialInfo> = {
   knit: { id: "knit", de: "Strick", en: "Knit" },
   ripstop: { id: "ripstop", de: "Ripstop", en: "Ripstop" },
   cotton: { id: "cotton", de: "Baumwolle", en: "Cotton" },
+  mohair: { id: "mohair", de: "Mohair", en: "Mohair" },
   rubber: { id: "rubber", de: "Gummi", en: "Rubber" },
   eva: { id: "eva", de: "EVA-Schaum", en: "EVA Foam" },
 };
 
 export const MATERIALS_FOR: Record<PartKind, MaterialId[]> = {
-  upper: ["leather", "suede", "nubuck", "canvas", "mesh", "knit", "ripstop"],
-  laces: ["cotton"],
+  upper: ["leather", "pebble", "suede", "nubuck", "canvas", "mesh", "knit", "ripstop"],
+  laces: ["cotton", "mohair"],
   sole: ["rubber", "eva"],
 };
 

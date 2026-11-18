@@ -18,6 +18,7 @@ export type PartId =
 
 export type MaterialId =
   | "leather"
+  | "pebble"
   | "suede"
   | "nubuck"
   | "canvas"
@@ -25,6 +26,7 @@ export type MaterialId =
   | "knit"
   | "ripstop"
   | "cotton"
+  | "mohair"
   | "rubber"
   | "eva";
 

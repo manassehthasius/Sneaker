@@ -21,6 +21,7 @@ interface MaterialRecipe {
 
 const RECIPES: Record<MaterialId, MaterialRecipe> = {
   leather: { tile: 140, roughness: 0.5, normalScale: 0.55, maps: { albedo: true, normal: true, roughness: true }, clearcoat: 0.12, clearcoatRoughness: 0.45 },
+  pebble: { tile: 52, roughness: 0.58, normalScale: 1.6, maps: { albedo: true, normal: true, roughness: true }, clearcoat: 0.08, clearcoatRoughness: 0.5, dir: "leather" },
   suede: { tile: 110, roughness: 1, normalScale: 0.35, maps: { albedo: true, normal: true }, sheen: 1, sheenRoughness: 0.55 },
   nubuck: { tile: 120, roughness: 0.92, normalScale: 0.3, maps: { albedo: true, normal: true }, sheen: 0.55, sheenRoughness: 0.45 },
   canvas: { tile: 55, roughness: 0.95, normalScale: 0.9, maps: { albedo: true, normal: true, roughness: true } },
@@ -28,6 +29,7 @@ const RECIPES: Record<MaterialId, MaterialRecipe> = {
   knit: { tile: 60, roughness: 0.92, normalScale: 0.9, maps: { albedo: true, normal: true, roughness: true } },
   ripstop: { tile: 50, roughness: 0.62, normalScale: 0.6, maps: { albedo: true, normal: true }, sheen: 0.25, sheenRoughness: 0.3 },
   cotton: { tile: 18, roughness: 0.95, normalScale: 0.8, maps: { albedo: true, normal: true } },
+  mohair: { tile: 14, roughness: 1, normalScale: 1.2, maps: { albedo: true, normal: true }, sheen: 1, sheenRoughness: 0.85, dir: "knit" },
   rubber: { tile: 90, roughness: 0.78, normalScale: 0.35, maps: { normal: true, roughness: true } },
   eva: { tile: 70, roughness: 0.68, normalScale: 0.4, maps: { albedo: true, normal: true } },
 };
@@ -35,8 +37,9 @@ const RECIPES: Record<MaterialId, MaterialRecipe> = {
 const loader = new THREE.TextureLoader();
 const cache = new Map<string, THREE.Texture>();
 
-function tex(mat: MaterialId, kind: string, srgb: boolean, tile: number, aniso: number) {
-  const key = `${mat}/${kind}`;
+function tex(matIn: MaterialId, kind: string, srgb: boolean, tile: number, aniso: number) {
+  const mat = RECIPES[matIn].dir ?? matIn;
+  const key = `${mat}/${kind}/${tile}`;
   let t = cache.get(key);
   if (!t) {
     t = loader.load(`/materials/${mat}/${kind}.jpg`);

@@ -4,6 +4,7 @@ import { MATERIALS, MATERIALS_FOR, PALETTE, PART, PARTS } from "@/lib/shoe/catal
 import type { PartId } from "@/lib/shoe/types";
 import { useStudio } from "@/lib/store";
 import { materialFacts } from "@/lib/production/checks";
+import { partExists } from "@/lib/shoe/models";
 import { ProductionPanel } from "./ProductionPanel";
 import { Chip, Section } from "./ui";
 
@@ -42,6 +43,12 @@ export function RightPanel() {
         <h2 className="font-display text-[22px] font-extrabold leading-tight">{p.de}</h2>
         <p className="mt-0.5 font-mono text-[11px] text-faint">{p.en} · {MATERIALS[cur.m].de}</p>
       </div>
+
+      {!partExists(design.shape, selected) && (
+        <p className="rounded-lg border border-warn/40 bg-warn/[0.07] p-3 text-[12.5px] leading-snug">
+          Dieses Teil kommt in der aktuellen Konstruktion nicht vor. Du kannst es im Tab «Form» unter «Konstruktion» wieder einschalten.
+        </p>
+      )}
 
       {mode === "beg" && (
         <div className="grid gap-2 rounded-xl border border-accent/30 bg-accent/[0.07] p-3 text-[12.5px] leading-relaxed">

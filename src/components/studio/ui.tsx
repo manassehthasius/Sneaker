@@ -25,7 +25,7 @@ export function Chip({ active, className = "", ...rest }: ButtonHTMLAttributes<H
 
 export function Section({ title, children, right }: { title: string; children: ReactNode; right?: ReactNode }) {
   return (
-    <section className="grid gap-2">
+    <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
       <div className="flex items-center justify-between">
         <span className="label">{title}</span>
         {right}

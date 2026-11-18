@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { MODELS } from "@/lib/shoe/models";
+import { MODELS, STYLES } from "@/lib/shoe/models";
 import { useStudio, writeDraft } from "@/lib/store";
 import { BauPanel } from "./BauPanel";
 import { LeftPanel } from "./LeftPanel";
@@ -24,7 +24,7 @@ export default function Studio() {
   useEffect(() => {
     hydrate();
     // Nur in der Entwicklung: Zugriff für automatische Tests
-    if (process.env.NODE_ENV !== "production") Object.assign(window as object, { __studio: useStudio, __models: MODELS });
+    if (process.env.NODE_ENV !== "production") Object.assign(window as object, { __studio: useStudio, __models: MODELS, __styles: STYLES });
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;

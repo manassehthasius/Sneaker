@@ -87,6 +87,16 @@ export function interpretWish(text: string): WishResult {
   if (has("breit", "rund", "bulky", "klobig")) { r.shape.toeWidth = 1.1; r.shape.toeRound = 0.75; r.shape.toeHeight = 1.08; r.understood.push("breite, runde Spitze"); }
   if (has("zehenhub", "nach oben gebogen")) { r.shape.toeSpring = 18; r.understood.push("mehr Zehenhub"); }
 
+  // Konstruktion
+  if (has("t-toe", "t toe", "terrace")) { r.shape.toecapStyle = "ttoe"; r.shape.mudguardHeight = 0; r.understood.push("T-Toe"); }
+  if (has("shell toe", "shelltoe", "gummikappe")) { r.shape.shellToe = 1; r.shape.toecapStyle = "none"; r.understood.push("Shell Toe aus Gummi"); }
+  if (has("ohne zehenkappe", "clean", "minimal", "nahtlos")) { r.shape.toecapStyle = "none"; r.shape.mudguardHeight = 0; r.understood.push("ohne Overlays vorne"); }
+  if (has("ollie", "hohes seitenband", "viele overlays", "panel")) { r.shape.mudguardHeight = 0.85; r.shape.eyestayWidth = 0.2; r.understood.push("hohes Seitenband"); }
+  if (has("dicke zunge", "puffy", "gepolsterte zunge")) { r.shape.tongueHeight = 14; r.understood.push("dicke Zunge"); }
+  if (has("breite senkel", "breite schnürsenkel", "fette senkel")) { r.shape.laceWidth = 14; r.understood.push("breite Senkel"); }
+  if (has("mohair")) { r.materials.push({ parts: ["laces"], m: "mohair" }); r.understood.push("Mohair-Senkel"); }
+  if (has("genarbt", "pebble")) { r.materials.push({ parts: ["toecap", "mudguard", "heel"], m: "pebble" }); r.understood.push("genarbtes Leder"); }
+
   // Farben und Materialien pro Satzteil
   const clauses = t.split(/,|;| und | mit |\./).map((c) => c.trim()).filter(Boolean);
   for (const c of clauses) {
@@ -103,3 +113,148 @@ export function interpretWish(text: string): WishResult {
 }
 
 export const PALETTE_NAMES = Object.fromEntries(PALETTE.map(([n, h]) => [h.toLowerCase(), n]));
+
+/* ------------------------------------------------------------------ */
+/* Stilrichtungen                                                      */
+/* ------------------------------------------------------------------ */
+
+type PartMap = Record<PartId, [string, MaterialId]>;
+
+export interface StylePreset {
+  id: string;
+  name: string;
+  /** Woher die Stilrichtung kommt (Genre, keine Kopie) */
+  inspired: string;
+  text: string;
+  shape: Partial<ShapeParams>;
+  soleH: number;
+  parts: PartMap;
+  perforation?: boolean;
+}
+
+/**
+ * Stilrichtungen, inspiriert von bekannten Genres und Designer-Labels.
+ * Bewusst ohne Logos, Streifen, Muster oder andere geschützte Erkennungsmerkmale.
+ */
+export const STYLES: StylePreset[] = [
+  {
+    id: "terrace", name: "Terrace Low", inspired: "Terrace-Stil der Fussballkultur (z. B. Samba, Gazelle, Palermo)",
+    text: "Flach, schmal und lang, mit T-Toe, Wildleder-Overlays und dünner Gummisohle.",
+    soleH: 24,
+    shape: { collar: 0, soleType: "cupsole", toeSpring: 8, toeWidth: 0.88, toeHeight: 0.84, toeRound: 0.28, width: 0.95, soleFlare: 0, toecapStyle: "ttoe", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 0.9, eyestayWidth: 0.12, eyelets: 7, tongueHeight: 6, collarDip: 0.8, shellToe: 0, laceWidth: 6 },
+    parts: { quarter: ["#F2EEE6", "leather"], vamp: ["#F2EEE6", "leather"], toecap: ["#3B2A22", "suede"], mudguard: ["#3B2A22", "suede"], heel: ["#3B2A22", "suede"], heeltab: ["#3B2A22", "suede"], eyestay: ["#F2EEE6", "leather"], tongue: ["#1A1B1C", "leather"], lining: ["#F2EEE6", "leather"], badge: ["#D9B44A", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#A86F3A", "rubber"], outsole: ["#A86F3A", "rubber"] },
+  },
+  {
+    id: "court-classic", name: "Court Classic", inspired: "Basketball-Court-Klassiker der 80er (z. B. AF1, Superstar)",
+    text: "Breite, runde Spitze, kräftige Cupsole, perforierte Zehenkappe, ganz in Weiss.",
+    soleH: 36, perforation: true,
+    shape: { collar: 0, soleType: "cupsole", toeSpring: 10, toeWidth: 1.08, toeHeight: 1.08, toeRound: 0.72, width: 1.04, soleFlare: 1, toecapStyle: "cap", toecapLength: 0.55, mudguardHeight: 0.42, heelCounter: 1.2, eyestayWidth: 0.16, eyelets: 0, tongueHeight: 4, collarDip: 1.1, shellToe: 0, laceWidth: 7 },
+    parts: { quarter: ["#F4F3EF", "leather"], vamp: ["#F4F3EF", "leather"], toecap: ["#F4F3EF", "leather"], mudguard: ["#F4F3EF", "leather"], heel: ["#F4F3EF", "leather"], heeltab: ["#F4F3EF", "leather"], eyestay: ["#F4F3EF", "leather"], tongue: ["#F4F3EF", "leather"], lining: ["#F4F3EF", "mesh"], badge: ["#E8E6E0", "leather"], laces: ["#F4F3EF", "cotton"], midsole: ["#F6F5F1", "rubber"], outsole: ["#F6F5F1", "rubber"] },
+  },
+  {
+    id: "skate-panel", name: "Skate Panel Low", inspired: "Skate- und Panel-Lows (z. B. Dunk Low, Dior B27)",
+    text: "Viele Overlays, hohes Seitenband als Ollie-Guard, gepolsterte Zunge, weisse Mittelsohle auf Gummi.",
+    soleH: 32,
+    shape: { collar: 0.05, soleType: "cupsole", toeSpring: 11, toeWidth: 1.04, toeHeight: 1.02, toeRound: 0.62, width: 1.02, soleFlare: 0.5, toecapStyle: "cap", toecapLength: 0.62, mudguardHeight: 0.85, heelCounter: 1.3, eyestayWidth: 0.2, eyelets: 0, tongueHeight: 12, collarDip: 1.2, shellToe: 0, laceWidth: 8 },
+    parts: { quarter: ["#F2EEE6", "leather"], vamp: ["#F2EEE6", "leather"], toecap: ["#2F5640", "suede"], mudguard: ["#2F5640", "suede"], heel: ["#2F5640", "suede"], heeltab: ["#2F5640", "suede"], eyestay: ["#2F5640", "suede"], tongue: ["#F2EEE6", "ripstop"], lining: ["#F2EEE6", "mesh"], badge: ["#F2EEE6", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#F3EDE1", "rubber"], outsole: ["#A86F3A", "rubber"] },
+  },
+  {
+    id: "retro-hoop", name: "Retro Hoop High", inspired: "Basketball-High-Tops der 80er (z. B. Jordan 1)",
+    text: "Hoher Schaft, klare Overlays, lange Schnürung, flache und kräftige Mittelsohle.",
+    soleH: 30, perforation: true,
+    shape: { collar: 1, soleType: "cupsole", toeSpring: 11, toeWidth: 0.98, toeHeight: 0.98, toeRound: 0.5, width: 1, soleFlare: 0, toecapStyle: "cap", toecapLength: 0.55, mudguardHeight: 0.55, heelCounter: 1.25, eyestayWidth: 0.17, eyelets: 9, tongueHeight: 8, collarDip: 1, shellToe: 0, laceWidth: 7 },
+    parts: { quarter: ["#F2EEE6", "leather"], vamp: ["#F2EEE6", "leather"], toecap: ["#B6452C", "leather"], mudguard: ["#B6452C", "leather"], heel: ["#B6452C", "leather"], heeltab: ["#1A1B1C", "leather"], eyestay: ["#B6452C", "leather"], tongue: ["#F2EEE6", "ripstop"], lining: ["#1A1B1C", "mesh"], badge: ["#1A1B1C", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#F3EDE1", "rubber"], outsole: ["#B6452C", "rubber"] },
+  },
+  {
+    id: "luxe-high", name: "Luxe High", inspired: "Luxus-High-Tops von Designerhäusern (z. B. Dior B23)",
+    text: "Hoher, ruhiger Schaft mit wenigen Teilen, Gummisohle mit verstärkter Spitze.",
+    soleH: 28,
+    shape: { collar: 1, soleType: "vulc", toeSpring: 8, toeWidth: 1.02, toeHeight: 0.98, toeRound: 0.7, width: 1, soleFlare: 0, toecapStyle: "none", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 0.8, eyestayWidth: 0.13, eyelets: 9, tongueHeight: 4, collarDip: 0.6, shellToe: 0.15, laceWidth: 7 },
+    parts: { quarter: ["#F2EEE6", "canvas"], vamp: ["#F2EEE6", "canvas"], toecap: ["#F2EEE6", "canvas"], mudguard: ["#F2EEE6", "canvas"], heel: ["#1A1B1C", "leather"], heeltab: ["#1A1B1C", "leather"], eyestay: ["#1A1B1C", "leather"], tongue: ["#F2EEE6", "canvas"], lining: ["#1A1B1C", "leather"], badge: ["#1A1B1C", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#F2EEE6", "rubber"], outsole: ["#C9B28A", "rubber"] },
+  },
+  {
+    id: "luxe-runner", name: "Luxe Runner", inspired: "Designer-Runner mit skulpturaler Sohle (z. B. Dior B30)",
+    text: "Ausgestellte Keilsohle in zwei Tönen, Mesh mit Wildleder-Overlays, hohes Seitenband.",
+    soleH: 40,
+    shape: { collar: 0.12, soleType: "runner", toeSpring: 16, toeWidth: 0.95, toeHeight: 0.98, toeRound: 0.42, width: 1, soleFlare: 3.5, toecapStyle: "cap", toecapLength: 0.4, mudguardHeight: 0.7, heelCounter: 1.25, eyestayWidth: 0.18, eyelets: 7, tongueHeight: 6, collarDip: 1.2, shellToe: 0, laceWidth: 6 },
+    parts: { quarter: ["#5C6B7A", "mesh"], vamp: ["#5C6B7A", "mesh"], toecap: ["#2A2B2E", "suede"], mudguard: ["#2A2B2E", "suede"], heel: ["#2A2B2E", "suede"], heeltab: ["#B9BBBD", "ripstop"], eyestay: ["#2A2B2E", "suede"], tongue: ["#5C6B7A", "mesh"], lining: ["#2A2B2E", "knit"], badge: ["#B9BBBD", "leather"], laces: ["#2A2B2E", "cotton"], midsole: ["#ECEAE5", "eva"], outsole: ["#2A2B2E", "rubber"] },
+  },
+  {
+    id: "shell-toe-luxe", name: "Shell Toe Luxe", inspired: "Street-Luxe mit Gummi-Shell-Toe (z. B. Numeris Eclipse)",
+    text: "Reduzierte Basketball-Form der 60er mit skulpturaler Gummikappe über der Spitze, Wildleder und Leder, breite Mohair-Senkel.",
+    soleH: 30,
+    shape: { collar: 0.05, soleType: "cupsole", toeSpring: 9, toeWidth: 1.02, toeHeight: 0.98, toeRound: 0.62, width: 1, soleFlare: 0.5, toecapStyle: "none", toecapLength: 0.5, mudguardHeight: 0.3, heelCounter: 1.1, eyestayWidth: 0.15, eyelets: 6, tongueHeight: 8, collarDip: 0.9, shellToe: 1, laceWidth: 10 },
+    parts: { quarter: ["#1A1B1C", "suede"], vamp: ["#1A1B1C", "suede"], toecap: ["#1A1B1C", "suede"], mudguard: ["#1A1B1C", "leather"], heel: ["#1A1B1C", "leather"], heeltab: ["#1A1B1C", "leather"], eyestay: ["#1A1B1C", "leather"], tongue: ["#1A1B1C", "suede"], lining: ["#2A2B2E", "leather"], badge: ["#2A2B2E", "leather"], laces: ["#1A1B1C", "mohair"], midsole: ["#2A2B2E", "rubber"], outsole: ["#1A1B1C", "rubber"] },
+  },
+  {
+    id: "atelier-chunky", name: "Atelier Chunky", inspired: "Pariser Street-Luxe auf Chunky-Sohle (z. B. Numeris Atelier)",
+    text: "Kräftige Sohle, Zehenkappe aus genarbtem Leder, extra breite flache Senkel.",
+    soleH: 44,
+    shape: { collar: 0.05, soleType: "chunky", toeSpring: 12, toeWidth: 1.06, toeHeight: 1.06, toeRound: 0.66, width: 1.03, soleFlare: 2, toecapStyle: "cap", toecapLength: 0.6, mudguardHeight: 0.35, heelCounter: 1.1, eyestayWidth: 0.17, eyelets: 6, tongueHeight: 8, collarDip: 1, shellToe: 0, laceWidth: 14 },
+    parts: { quarter: ["#E6D9D6", "leather"], vamp: ["#E6D9D6", "leather"], toecap: ["#D9A6A0", "pebble"], mudguard: ["#D9A6A0", "pebble"], heel: ["#D9A6A0", "pebble"], heeltab: ["#D9A6A0", "pebble"], eyestay: ["#E6D9D6", "leather"], tongue: ["#E6D9D6", "leather"], lining: ["#F2EEE6", "leather"], badge: ["#D9A6A0", "leather"], laces: ["#E6D9D6", "cotton"], midsole: ["#F3EDE1", "rubber"], outsole: ["#F3EDE1", "rubber"] },
+  },
+  {
+    id: "campus-chunky-suede", name: "Chunky Suede Low", inspired: "Kräftige Wildleder-Lows der 80er (z. B. Campus)",
+    text: "Breiter, kräftiger Wildleder-Schuh mit dicker Zunge und heller Cupsole.",
+    soleH: 32,
+    shape: { collar: 0, soleType: "cupsole", toeSpring: 10, toeWidth: 1.06, toeHeight: 1.06, toeRound: 0.7, width: 1.05, soleFlare: 1, toecapStyle: "cap", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 1, eyestayWidth: 0.16, eyelets: 7, tongueHeight: 10, collarDip: 1, shellToe: 0, laceWidth: 7 },
+    parts: { quarter: ["#5C6B7A", "suede"], vamp: ["#5C6B7A", "suede"], toecap: ["#5C6B7A", "suede"], mudguard: ["#5C6B7A", "suede"], heel: ["#5C6B7A", "suede"], heeltab: ["#5C6B7A", "suede"], eyestay: ["#5C6B7A", "suede"], tongue: ["#5C6B7A", "suede"], lining: ["#F2EEE6", "leather"], badge: ["#F2EEE6", "leather"], laces: ["#F2EEE6", "cotton"], midsole: ["#F3EDE1", "rubber"], outsole: ["#F3EDE1", "rubber"] },
+  },
+  {
+    id: "designer-minimal", name: "Designer Minimal", inspired: "Minimalistische Luxus-Sneaker aus Italien",
+    text: "Fast nahtlos, ohne Overlays, schlanke Spitze, dünne vernähte Sohle, kleiner Patch.",
+    soleH: 26,
+    shape: { collar: 0, soleType: "cupsole", toeSpring: 9, toeWidth: 0.92, toeHeight: 0.9, toeRound: 0.45, width: 0.97, soleFlare: 0, toecapStyle: "none", toecapLength: 0.5, mudguardHeight: 0, heelCounter: 0.65, eyestayWidth: 0.11, eyelets: 6, tongueHeight: 2, collarDip: 0.9, shellToe: 0, laceWidth: 6 },
+    parts: { quarter: ["#F4F3EF", "leather"], vamp: ["#F4F3EF", "leather"], toecap: ["#F4F3EF", "leather"], mudguard: ["#F4F3EF", "leather"], heel: ["#F4F3EF", "leather"], heeltab: ["#F4F3EF", "leather"], eyestay: ["#F4F3EF", "leather"], tongue: ["#F4F3EF", "leather"], lining: ["#EAE3D4", "leather"], badge: ["#D9B44A", "leather"], laces: ["#F4F3EF", "cotton"], midsole: ["#F6F5F1", "rubber"], outsole: ["#F6F5F1", "rubber"] },
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Meine Modelle (lokal gespeichert, exportierbar)                     */
+/* ------------------------------------------------------------------ */
+
+export interface MyModel {
+  id: string;
+  name: string;
+  shape: Partial<ShapeParams>;
+  soleH: number;
+  createdAt: number;
+}
+
+const MY_KEY = "sole-studio.my-models.v1";
+
+export function readMyModels(): MyModel[] {
+  try {
+    const raw = localStorage.getItem(MY_KEY);
+    return raw ? (JSON.parse(raw) as MyModel[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeMyModels(list: MyModel[]): boolean {
+  try {
+    localStorage.setItem(MY_KEY, JSON.stringify(list));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Prüft eine importierte Datei und gibt gültige Modelle zurück */
+export function parseModelFile(text: string): MyModel[] {
+  const data = JSON.parse(text);
+  const arr = Array.isArray(data) ? data : Array.isArray(data?.models) ? data.models : [data];
+  return arr
+    .filter((m: unknown): m is MyModel => !!m && typeof (m as MyModel).name === "string" && typeof (m as MyModel).soleH === "number" && typeof (m as MyModel).shape === "object")
+    .map((m: MyModel) => ({ ...m, id: Math.random().toString(36).slice(2, 10), createdAt: Date.now() }));
+}
+
+/** Ob ein Teil in der aktuellen Konstruktion überhaupt vorkommt */
+export function partExists(shape: Partial<ShapeParams> | undefined, id: PartId): boolean {
+  const s = shape ?? {};
+  if (id === "toecap") return (s.toecapStyle ?? "cap") !== "none";
+  if (id === "mudguard") return (s.mudguardHeight ?? 0.4) > 0.03;
+  if (id === "heel") return (s.heelCounter ?? 1) > 0.3;
+  return true;
+}

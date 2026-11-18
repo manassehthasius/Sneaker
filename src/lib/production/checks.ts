@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { MATERIALS } from "../shoe/catalog";
 import type { Design, MaterialId, PartId } from "../shoe/types";
 import { DEFAULT_SHAPE } from "../shoe/geometry";
+import { partExists } from "../shoe/models";
 
 export type CheckLevel = "ok" | "info" | "warn";
 
@@ -26,13 +27,13 @@ const UPPER_PARTS: PartId[] = ["quarter", "vamp", "toecap", "mudguard", "heel", 
 /** Ungefährer Flächenanteil der sichtbaren Teile am Obermaterial */
 const UPPER_AREA: Partial<Record<PartId, number>> = { quarter: 0.3, vamp: 0.24, toecap: 0.1, mudguard: 0.12, heel: 0.08, eyestay: 0.05, tongue: 0.08, heeltab: 0.02, badge: 0.01 };
 const WEAR_ZONES: PartId[] = ["toecap", "mudguard", "heel"];
-const TEXTILE: MaterialId[] = ["canvas", "mesh", "knit", "ripstop", "cotton"];
+const TEXTILE: MaterialId[] = ["canvas", "mesh", "knit", "ripstop", "cotton", "mohair"];
 const SUEDES: MaterialId[] = ["suede", "nubuck"];
 
 /** Kategorie für die Materialkennzeichnung (EU-Richtlinie 94/11/EG) */
 export type LabelCategory = "Leder" | "Beschichtetes Leder" | "Textil" | "Sonstiges Material";
 export function labelCategory(m: MaterialId): LabelCategory {
-  if (m === "leather" || m === "suede" || m === "nubuck") return "Leder";
+  if (m === "leather" || m === "pebble" || m === "suede" || m === "nubuck") return "Leder";
   if (TEXTILE.includes(m)) return "Textil";
   return "Sonstiges Material";
 }
@@ -52,7 +53,7 @@ function composition(entries: [MaterialId, number][]): string {
 
 /** Vorschau der Pflichtkennzeichnung: Obermaterial, Futter, Laufsohle */
 export function labelPreview(d: Design) {
-  const upper = composition(UPPER_PARTS.map((id) => [d.parts[id].m, UPPER_AREA[id] ?? 0.01]));
+  const upper = composition(UPPER_PARTS.filter((id) => partExists(d.shape, id)).map((id) => [d.parts[id].m, UPPER_AREA[id] ?? 0.01]));
   const lining = composition([[d.parts.lining.m, 1]]);
   const sole = composition([[d.parts.outsole.m, 1]]);
   return { upper, lining, sole };
@@ -63,7 +64,7 @@ export function productionChecks(d: Design): ProductionHint[] {
   const P = d.parts;
 
   // 1. Anzahl Material-Farb-Kombinationen
-  const combos = new Set(([...UPPER_PARTS, "lining"] as PartId[]).map((id) => `${P[id].m}|${P[id].c.toLowerCase()}`));
+  const combos = new Set(([...UPPER_PARTS, "lining"] as PartId[]).filter((id) => partExists(d.shape, id)).map((id) => `${P[id].m}|${P[id].c.toLowerCase()}`));
   out.push(
     combos.size > 5
       ? { level: "warn", title: `${combos.size} Material-Farb-Kombinationen`, text: "Jede Kombination wird separat beim Lieferanten bestellt, oft mit eigener Mindestmenge. Weniger Kombinationen senken Kosten und Risiko.", anchor: "materialien" }
@@ -83,17 +84,21 @@ export function productionChecks(d: Design): ProductionHint[] {
       : { level: "ok", title: "Standard-Cupsole", text: "Viele Hersteller haben passende Cupsoles auf Lager. Das spart die Gussform.", anchor: "bauweisen" },
   );
 
+  if (shape.shellToe > 0.3) out.push({ level: "info", title: "Shell Toe", text: "Die Gummikappe über der Spitze ist Teil der Sohlenform. Bei einer eigenen Kappe braucht es eine eigene Gussform; manche Hersteller haben Cupsoles mit Kappe auf Lager.", anchor: "bauweisen" });
+  if (shape.toecapStyle === "ttoe") out.push({ level: "info", title: "T-Toe", text: "Kappe und Streifen werden meist als ein Stück gestanzt. Die Naht am Streifen sauber im Tech Pack zeichnen.", anchor: "konstruktion" });
+  if (shape.laceWidth >= 12) out.push({ level: "info", title: "Breite Schnürsenkel", text: "Ösen und Ösenleiste müssen breit genug sein. Ösendurchmesser im Tech Pack angeben.", anchor: "techpack" });
+
   // Form
   if (shape.collar >= 0.75) out.push({ level: "info", title: "High-Top", text: "Mehr Material, längere Schnürung und ein gepolsterter Kragen. Der Fabrikpreis liegt meist etwas höher als beim Low-Top.", anchor: "kosten" });
   if (shape.toeWidth < 0.9 || shape.toeRound < 0.25) out.push({ level: "warn", title: "Sehr schmale Spitze", text: "Kann bei breiten Füssen drücken. Passform unbedingt am Muster mit mehreren Personen testen.", anchor: "leisten" });
   if (shape.toeSpring > 18) out.push({ level: "info", title: "Viel Zehenhub", text: "Starker Zehenhub braucht einen passenden Leisten. Frag den Hersteller, ob ein solcher vorhanden ist.", anchor: "leisten" });
 
   // 3. Textil an Verschleisszonen
-  const weak = WEAR_ZONES.filter((id) => P[id].m === "mesh" || P[id].m === "knit");
+  const weak = WEAR_ZONES.filter((id) => partExists(d.shape, id) && (P[id].m === "mesh" || P[id].m === "knit"));
   if (weak.length) out.push({ level: "warn", title: "Mesh an stark beanspruchter Stelle", text: "Spitze, Seitenband und Ferse scheuern am meisten. Mesh und Strick verschleissen dort schnell. Besser Leder, Wildleder oder ein Overlay darüber.", anchor: "materialien" });
 
   // 4. Helles Wildleder vorne
-  const lightSuede = WEAR_ZONES.filter((id) => SUEDES.includes(P[id].m) && lum(P[id].c) > 0.62);
+  const lightSuede = WEAR_ZONES.filter((id) => partExists(d.shape, id) && SUEDES.includes(P[id].m) && lum(P[id].c) > 0.62);
   if (lightSuede.length) out.push({ level: "info", title: "Helles Wildleder an Verschleisszonen", text: "Wird schnell schmutzig. Eine Imprägnierung ab Werk einplanen und im Tech Pack festhalten.", anchor: "materialien" });
 
   // 5. Perforation
@@ -112,7 +117,7 @@ export function productionChecks(d: Design): ProductionHint[] {
   if (P.midsole.m === "eva") out.push({ level: "info", title: "EVA-Zwischensohle", text: "EVA passt zur geklebten Bauweise (Cemented). Eine klassische Cupsole ist aus Gummi. Mit dem Hersteller die Bauweise festlegen.", anchor: "bauweisen" });
 
   // 8. Farben im Obermaterial
-  const colors = new Set((["quarter", "vamp", "toecap", "mudguard", "heel", "eyestay", "tongue"] as PartId[]).map((id) => P[id].c.toLowerCase()));
+  const colors = new Set((["quarter", "vamp", "toecap", "mudguard", "heel", "eyestay", "tongue"] as PartId[]).filter((id) => partExists(d.shape, id)).map((id) => P[id].c.toLowerCase()));
   if (colors.size > 3) out.push({ level: "info", title: `${colors.size} Hauptfarben`, text: "Jede Farbe braucht ein eigenes Farbmuster (Lab Dip) und eine eigene Freigabe. Das kostet Zeit.", anchor: "farben" });
 
   // 9. Leder-Futter
@@ -126,6 +131,8 @@ export function productionChecks(d: Design): ProductionHint[] {
 
 export function materialFacts(m: MaterialId): string {
   const facts: Record<MaterialId, string> = {
+    pebble: "Leder mit deutlich sichtbarer Narbung, geprägt oder natürlich. Robust, kaschiert kleine Kratzer, wirkt hochwertig und lässig.",
+    mohair: "Garn aus dem Haar der Angoraziege, leicht flauschig mit Glanz. Als Schnürsenkel ein edles Detail, empfindlicher als Baumwolle.",
     leather: "Glattleder für Sneaker meist um 1,2 bis 1,6 mm. Vollnarbig ist hochwertiger, korrigierter Narben günstiger und gleichmässiger.",
     suede: "Spaltleder mit angerauter Oberfläche, meist 1,2 bis 1,8 mm. Weich, aber empfindlich gegen Wasser und Schmutz.",
     nubuck: "Angeschliffenes Narbenleder, fester als Wildleder, oft 1,8 bis 2,2 mm. Edle, samtige Oberfläche.",

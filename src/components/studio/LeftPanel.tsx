@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PARTS, TEMPLATES } from "@/lib/shoe/catalog";
+import { partExists } from "@/lib/shoe/models";
 import { useStudio } from "@/lib/store";
 import { FormPanel } from "./FormPanel";
 import { Button } from "./ui";
@@ -11,7 +12,7 @@ type Tab = "parts" | "form" | "templates" | "projects";
 export function LeftPanel({ onPick }: { onPick?: () => void }) {
   const [tab, setTab] = useState<Tab>("parts");
   return (
-    <div className="grid gap-3 p-2.5">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3 p-2.5">
       <div className="grid grid-cols-4 gap-1 rounded-lg bg-bg p-1" role="tablist">
         {([["parts", "Teile"], ["form", "Form"], ["templates", "Farben"], ["projects", "Projekte"]] as [Tab, string][]).map(([id, label]) => (
           <button
@@ -45,7 +46,8 @@ function PartList({ onPick }: { onPick?: () => void }) {
             type="button"
             aria-current={selected === p.id}
             onClick={() => { select(p.id); onPick?.(); }}
-            className={`grid min-h-10 w-full grid-cols-[18px_1fr] items-center gap-2.5 rounded-lg border px-2 py-1.5 text-left ${selected === p.id ? "border-accent/40 bg-accent/10" : "border-transparent hover:bg-raise"}`}
+            className={`grid min-h-10 w-full grid-cols-[18px_1fr] items-center gap-2.5 rounded-lg border px-2 py-1.5 text-left ${selected === p.id ? "border-accent/40 bg-accent/10" : "border-transparent hover:bg-raise"} ${partExists(design.shape, p.id) ? "" : "opacity-45"}`}
+            title={partExists(design.shape, p.id) ? undefined : "In diesem Modell nicht vorhanden"}
           >
             <span className="h-[18px] w-[18px] rounded-full border border-white/20" style={{ background: design.parts[p.id].c }} />
             <span className="leading-tight">
