@@ -1,10 +1,10 @@
 "use client";
 
 import { ContactShadows, Environment, OrbitControls } from "@react-three/drei";
-import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
+import { EffectComposer, N8AO, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useStudio, type ViewPreset } from "@/lib/store";
@@ -74,9 +74,30 @@ function Effects() {
   return (
     <EffectComposer multisampling={4} enableNormalPass={false}>
       <N8AO aoRadius={0.018} distanceFalloff={0.6} intensity={2.4} quality={dpr > 1.5 ? "medium" : "high"} halfRes={dpr > 1.5} depthAwareUpsampling color="#1a1612" />
+      <Vignette offset={0.32} darkness={0.4} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
     </EffectComposer>
   );
+}
+
+/** Nahtloser Studio-Hintergrund: leicht aufgehellte Mitte, zu den Rändern etwas dunkler (im Mittel weiter neutral grau) */
+function StudioBackdrop() {
+  const tex = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 512;
+    const g = c.getContext("2d")!;
+    const grad = g.createRadialGradient(256, 210, 20, 256, 256, 400);
+    grad.addColorStop(0, "#a9a9a9");
+    grad.addColorStop(0.55, "#8f8f8f");
+    grad.addColorStop(1, "#6e6e6e");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 512, 512);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
+  useEffect(() => () => tex.dispose(), [tex]);
+  return <primitive object={tex} attach="background" />;
 }
 
 const SCENE_FILES = { studio: "/env/studio.hdr", street: "/env/street.hdr", parking: "/env/parking.hdr", city: "/env/city.hdr" } as const;
@@ -88,9 +109,9 @@ function SceneSetup() {
     return (
       <>
         {/* Neutral grau: nur so lassen sich Farben ehrlich beurteilen */}
-        <color attach="background" args={["#979797"]} />
+        <StudioBackdrop />
         <Suspense fallback={null}>
-          <Environment files={SCENE_FILES.studio} environmentIntensity={1.0} />
+          <Environment files={SCENE_FILES.studio} environmentIntensity={0.8} />
         </Suspense>
       </>
     );
@@ -116,7 +137,7 @@ export default function Viewport() {
       gl={{ antialias: true, preserveDrawingBuffer: true }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.NeutralToneMapping;
-        gl.toneMappingExposure = 1.0;
+        gl.toneMappingExposure = 0.88;
       }}
       style={{ touchAction: "none" }}
     >
@@ -128,8 +149,9 @@ export default function Viewport() {
       </Suspense>
       <directionalLight
         position={[0.25, 0.9, 0.35]}
-        intensity={0.75}
+        intensity={1.4}
         castShadow
+        shadow-radius={6}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
         shadow-normalBias={0.002}
@@ -141,10 +163,12 @@ export default function Viewport() {
         shadow-camera-far={2}
       />
       {/* Streiflicht von hinten: lässt Wildleder-Flor und Kanten aufleuchten */}
-      <directionalLight position={[-0.5, 0.35, -0.4]} intensity={0.35} color="#fff4e6" />
+      <directionalLight position={[-0.5, 0.35, -0.4]} intensity={0.5} color="#fff4e6" />
+      {/* Weiches Aufhelllicht von vorn rechts: hält die Schattenseite offen, ohne die Form flach zu machen */}
+      <directionalLight position={[0.6, 0.2, 0.5]} intensity={0.22} color="#e8f0ff" />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0002, 0]} receiveShadow>
         <planeGeometry args={[2, 2]} />
-        <shadowMaterial opacity={0.22} />
+        <shadowMaterial opacity={0.3} />
       </mesh>
       <Controls />
       <CameraRig />
